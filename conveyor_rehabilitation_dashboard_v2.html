@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Conveyor Rehabilitation Dashboard — OB.9</title>
+<style>
+/* ── Reset & Base ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Segoe UI', Arial, sans-serif; font-size: 14px; background: #F4F6F9; color: #1A2340; line-height: 1.5; }
+
+/* ── Page Header ── */
+.page-header {
+  background: linear-gradient(135deg, #0D2657 0%, #1A4A8A 60%, #1D7A9E 100%);
+  padding: 20px 24px 16px;
+  border-bottom: 4px solid #F4A020;
+}
+.page-header h1 { color: #fff; font-size: 20px; font-weight: 700; letter-spacing: 0.3px; }
+.page-header .sub { color: #B8D4F0; font-size: 12px; margin-top: 4px; }
+.header-badges { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+.hbadge { padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+.hb-warn { background: #F4A020; color: #1A2340; }
+.hb-info { background: rgba(255,255,255,0.2); color: #fff; border: 1px solid rgba(255,255,255,0.4); }
+
+/* ── Container ── */
+.container { max-width: 1100px; margin: 0 auto; padding: 20px 16px 40px; }
+
+/* ── Tabs ── */
+.tabs { display: flex; gap: 4px; margin-bottom: 20px; flex-wrap: wrap; border-bottom: 2px solid #D0D8E8; padding-bottom: 4px; }
+.tab {
+  padding: 8px 18px; border-radius: 6px 6px 0 0; font-size: 13px; font-weight: 500;
+  cursor: pointer; color: #5A6A8A; background: #E8EDF5;
+  border: 1.5px solid #C4CEDF; border-bottom: none;
+  transition: all .15s; user-select: none;
+}
+.tab:hover:not(.active) { background: #D0D9ED; color: #1A2340; }
+.tab.active { background: #fff; color: #0D2657; border-color: #3A7BD5; border-bottom: 2px solid #fff; margin-bottom: -2px; font-weight: 700; }
+.panel { display: none; }
+.panel.active { display: block; }
+
+/* ── Section Title ── */
+.section-title {
+  font-size: 14px; font-weight: 700; color: #0D2657;
+  margin: 20px 0 10px;
+  padding: 6px 12px 6px 14px;
+  background: #EBF1FB;
+  border-left: 5px solid #3A7BD5;
+  border-radius: 0 6px 6px 0;
+  border: 1px solid #C4D6F0;
+  border-left: 5px solid #3A7BD5;
+}
+.section-title.orange  { border-left-color: #E07820; background: #FDF3E8; border-color: #F0D4B0; border-left-color: #E07820; }
+.section-title.green   { border-left-color: #1A8A55; background: #E8F5EE; border-color: #B0D8C0; border-left-color: #1A8A55; }
+.section-title.purple  { border-left-color: #6340C0; background: #F0EDFB; border-color: #CEC4EC; border-left-color: #6340C0; }
+.section-title.red     { border-left-color: #C02020; background: #FBE8E8; border-color: #F0C4C4; border-left-color: #C02020; }
+
+/* ── Metric Grid ── */
+.metric-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(155px, 1fr)); gap: 12px; margin-bottom: 20px; }
+.metric {
+  background: #fff;
+  border-radius: 8px;
+  padding: 14px 16px;
+  border: 1.5px solid #C8D4E8;
+  border-top: 4px solid #3A7BD5;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+}
+.metric.orange { border-top-color: #E07820; }
+.metric.green  { border-top-color: #1A8A55; }
+.metric.red    { border-top-color: #C02020; }
+.metric.purple { border-top-color: #6340C0; }
+.metric-label { font-size: 11px; font-weight: 600; color: #4A5A78; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.4px; }
+.metric-value { font-size: 22px; font-weight: 700; color: #0D2657; }
+.metric-sub { font-size: 11px; color: #7A8AA8; margin-top: 3px; }
+
+/* ── Card ── */
+.card {
+  background: #fff;
+  border: 1.5px solid #C8D4E8;
+  border-radius: 8px;
+  padding: 16px 18px;
+  margin-bottom: 14px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+.card.highlight-green  { border-color: #1A8A55; border-width: 2px; }
+.card.highlight-orange { border-color: #E07820; border-width: 2px; }
+
+/* ── Tables ── */
+.table-wrap { overflow-x: auto; border-radius: 8px; border: 1.5px solid #C8D4E8; margin-bottom: 14px; }
+.table {
+  width: 100%; border-collapse: collapse; font-size: 13px;
+}
+.table thead tr {
+  background: #0D2657;
+}
+.table thead th {
+  padding: 10px 12px; font-weight: 600; font-size: 12px;
+  color: #fff; text-align: left; white-space: nowrap;
+  border-right: 1px solid rgba(255,255,255,0.15);
+}
+.table thead th:last-child { border-right: none; }
+.table tbody tr { border-bottom: 1.5px solid #D8E2F0; }
+.table tbody tr:last-child { border-bottom: none; }
+.table tbody tr:nth-child(even) { background: #F4F7FB; }
+.table tbody tr:hover { background: #EBF2FF; }
+.table td {
+  padding: 9px 12px; color: #1A2340; vertical-align: middle;
+  border-right: 1px solid #D8E2F0;
+}
+.table td:last-child { border-right: none; }
+.table td strong { color: #0D2657; font-weight: 700; }
+/* Row highlight classes */
+.table tr.row-critical { background: #FFF0EE !important; }
+.table tr.row-critical td { border-bottom: 1px solid #F4C4BC; }
+.table tr.row-critical td:first-child { border-left: 4px solid #C02020; }
+.table tr.row-warn { background: #FFFBEC !important; }
+.table tr.row-warn td:first-child { border-left: 4px solid #E07820; }
+.table tr.row-ok { background: #F0FBF4 !important; }
+.table tr.row-ok td:first-child { border-left: 4px solid #1A8A55; }
+
+/* ── Badges ── */
+.badge {
+  display: inline-flex; align-items: center;
+  font-size: 11px; font-weight: 700; padding: 3px 9px;
+  border-radius: 20px; white-space: nowrap;
+  border: 1px solid transparent;
+}
+.badge-danger  { background: #FEEDED; color: #A01010; border-color: #F4BFBF; }
+.badge-warn    { background: #FFF4E0; color: #9A5500; border-color: #F0D89A; }
+.badge-success { background: #E4F7EC; color: #0F6630; border-color: #A8DFC0; }
+.badge-info    { background: #E4EFFE; color: #0A3A88; border-color: #A8C4F4; }
+.badge-purple  { background: #EEE8FC; color: #4828A0; border-color: #C4B0EC; }
+
+/* ── Progress Bar ── */
+.progress-bar { height: 8px; background: #D8E2F0; border-radius: 4px; overflow: hidden; margin-top: 6px; border: 1px solid #C4D0E4; }
+.progress-fill { height: 100%; border-radius: 4px; transition: width .4s; }
+
+/* ── WBS ── */
+.wbs-container { padding: 4px 0; }
+.wbs-item { padding: 8px 12px; margin: 3px 0; border-radius: 4px; }
+.wbs-l1 {
+  margin-left: 0;
+  background: #EBF1FB;
+  border-left: 5px solid #1A4A8A;
+  border: 1px solid #B4CCE8;
+  border-left: 5px solid #1A4A8A;
+  margin-top: 14px;
+}
+.wbs-l1:first-child { margin-top: 0; }
+.wbs-l2 {
+  margin-left: 20px;
+  background: #F0FBF4;
+  border-left: 4px solid #1A8A55;
+  border: 1px solid #B8DCCA;
+  border-left: 4px solid #1A8A55;
+}
+.wbs-l3 {
+  margin-left: 40px;
+  background: #FFFDF0;
+  border-left: 3px solid #C08000;
+  border: 1px solid #E4D4A0;
+  border-left: 3px solid #C08000;
+  font-size: 13px;
+}
+.wbs-l4 {
+  margin-left: 60px;
+  border-left: 2px dashed #A0B0C8;
+  background: #F8FAFD;
+  font-size: 12px;
+}
+.wbs-title { font-weight: 600; color: #1A2340; }
+.wbs-l1 .wbs-title { color: #0D2657; font-size: 14px; }
+.wbs-l2 .wbs-title { color: #0F5030; }
+.wbs-l3 .wbs-title { color: #6A4800; }
+.wbs-sub { font-size: 12px; color: #6A7A98; margin-top: 3px; }
+
+/* ── PM Level Sub-tabs ── */
+.pm-tabs { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
+.pm-tab {
+  padding: 7px 16px; border-radius: 6px; font-size: 13px; font-weight: 600;
+  cursor: pointer; color: #4A5A78; background: #E8EDF5;
+  border: 1.5px solid #C4CEDF; transition: all .15s; user-select: none;
+}
+.pm-tab:hover:not(.active) { background: #D4DFF0; }
+.pm-tab.active { background: #0D2657; color: #fff; border-color: #0D2657; }
+
+/* ── Cost Bars ── */
+.cf-bar-wrap { display: flex; gap: 8px; align-items: flex-end; height: 150px; margin: 14px 0 8px; padding: 0 4px; }
+.cf-bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; }
+.cf-bar { width: 100%; border-radius: 4px 4px 0 0; min-height: 4px; transition: height .4s; border: 1px solid rgba(0,0,0,0.1); }
+.cf-label { font-size: 10px; color: #5A6A88; text-align: center; font-weight: 600; }
+.cf-val   { font-size: 10px; color: #1A2340; text-align: center; font-weight: 700; }
+
+/* ── Two-col ── */
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+@media (max-width: 600px) { .two-col { grid-template-columns: 1fr; } }
+
+/* ── OP Comparison ── */
+.op-compare { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+@media (max-width: 600px) { .op-compare { grid-template-columns: 1fr; } }
+.op-card {
+  border-radius: 8px; padding: 16px;
+  border: 1.5px solid #C8D4E8; background: #fff;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+}
+.op-card.selected {
+  border: 2.5px solid #1A8A55;
+  background: #F4FCF7;
+}
+.op-card-title { font-size: 14px; font-weight: 700; color: #0D2657; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+.op-card table { width: 100%; font-size: 13px; border-collapse: collapse; }
+.op-card table tr { border-bottom: 1px solid #E0EAF8; }
+.op-card table tr:last-child { border-bottom: none; }
+.op-card table td { padding: 7px 6px; }
+.op-card table td:last-child { text-align: right; font-weight: 600; }
+.op-notes { margin-top: 10px; padding-top: 10px; border-top: 1.5px solid #D0DDE8; font-size: 12px; line-height: 1.7; }
+.op-notes .plus { color: #1A8A55; }
+.op-notes .minus { color: #C02020; }
+
+/* ── Cash Flow Table ── */
+.cf-table .peak-row { background: #FFF4E0 !important; font-weight: 600; }
+.cf-table .peak-row td:first-child { border-left: 4px solid #E07820; }
+
+/* ── Key Highlight Box ── */
+.highlight-box {
+  padding: 12px 16px; border-radius: 8px; margin-bottom: 14px;
+  display: flex; align-items: flex-start; gap: 10px;
+  font-size: 13px; line-height: 1.6;
+}
+.highlight-box.info   { background: #E8F0FE; border: 1.5px solid #A8C0F8; color: #0A2A70; }
+.highlight-box.warn   { background: #FFF8E8; border: 1.5px solid #F0D090; color: #6A4000; }
+.highlight-box.danger { background: #FEF0EE; border: 1.5px solid #F4B8B0; color: #8A1010; }
+.highlight-box.success{ background: #E8F8EE; border: 1.5px solid #A8DEC0; color: #0A4A20; }
+.highlight-box .icon  { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+
+/* ── Checklist striped ── */
+.checklist-section-row td { background: #EBF1FB !important; font-weight: 700; color: #0D2657 !important; border-left: 5px solid #1A4A8A !important; }
+
+/* ── Footer ── */
+.footer { text-align: center; font-size: 11px; color: #8A9AB8; padding: 16px 0 4px; border-top: 1.5px solid #D0D8E8; margin-top: 24px; }
+
+/* ── Print ── */
+@media print {
+  .tabs { display: none; }
+  .panel { display: block !important; page-break-before: always; }
+  .panel:first-of-type { page-break-before: avoid; }
+}
+</style>
+</head>
+<body>
+
+<!-- PAGE HEADER -->
+<div class="page-header">
+  <h1>📊 Dashboard — โครงการฟื้นฟูระบบสายพาน OB.9</h1>
+  <div class="sub">Mae Moh Mine, Contract 9 | Landslide Recovery | ITD-MM9-DA-2026-001</div>
+  <div class="header-badges">
+    <span class="hbadge hb-warn">⚠ In Progress</span>
+    <span class="hbadge hb-info">ธ.ค. 2568 – ก.ค. 2569</span>
+    <span class="hbadge hb-info">งบ OP2: 929 ล้านบาท</span>
+    <span class="hbadge hb-info">BW2200 | ST3500–4000</span>
+  </div>
+</div>
+
+<div class="container">
+
+<!-- TABS -->
+<div class="tabs">
+  <div class="tab active" onclick="showTab('overview', this)">📋 ภาพรวมโครงการ</div>
+  <div class="tab" onclick="showTab('cost', this)">💰 Cost Analysis</div>
+  <div class="tab" onclick="showTab('cashflow', this)">📈 Cash Flow</div>
+  <div class="tab" onclick="showTab('wbs', this)">🗂 WBS โครงการ</div>
+  <div class="tab" onclick="showTab('pm', this)">🔧 แผน PM / Predictive</div>
+</div>
+
+<!-- ══ TAB 1: OVERVIEW ══ -->
+<div class="panel active" id="tab-overview">
+
+  <div class="highlight-box warn">
+    <span class="icon">⚠️</span>
+    <div><strong>สถานะโครงการ:</strong> อยู่ระหว่างดำเนินการ — ต้องติดตาม Belt (34% of budget) และ Motor Recon 36 ชุดอย่างใกล้ชิด ระยะเวลาดำเนินการ 8 เดือน (ธ.ค. 68 – ก.ค. 69)</div>
+  </div>
+
+  <div class="metric-grid">
+    <div class="metric orange">
+      <div class="metric-label">งบรวม OP2 (เลือกใช้)</div>
+      <div class="metric-value">929 MB</div>
+      <div class="metric-sub">ล้านบาท — ประหยัด 49% จาก OP1</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label">งบเต็ม OP1 (ลงทุนใหม่)</div>
+      <div class="metric-value">1,819 MB</div>
+      <div class="metric-sub">ล้านบาท — เปรียบเทียบฐาน</div>
+    </div>
+    <div class="metric green">
+      <div class="metric-label">ความยาวสายพานรวม</div>
+      <div class="metric-value">10,202 m</div>
+      <div class="metric-sub">Line A + B (9 สถานี)</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label">ราคาต่อเมตร OP2</div>
+      <div class="metric-value">91,069</div>
+      <div class="metric-sub">บาท/เมตร</div>
+    </div>
+    <div class="metric purple">
+      <div class="metric-label">Motor Drive 1,500 kW</div>
+      <div class="metric-value">39 ชุด</div>
+      <div class="metric-sub">3 ใหม่ / 36 Recon — 6.6 kV</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label">ช่วงเวลาดำเนินการ</div>
+      <div class="metric-value">8 เดือน</div>
+      <div class="metric-sub">ธ.ค. 68 — ก.ค. 69</div>
+    </div>
+  </div>
+
+  <div class="section-title">สรุปสถานะโครงการ — OP1 vs OP2</div>
+  <div class="op-compare">
+    <div class="op-card">
+      <div class="op-card-title">OP1 — ลงทุนใหม่ 100% <span class="badge badge-info">เปรียบเทียบ</span></div>
+      <table>
+        <tr><td>ค่าเครื่องจักรใหม่</td><td>1,819 MB</td></tr>
+        <tr><td>ราคาต่อเมตร</td><td>178,310 ฿/m</td></tr>
+        <tr><td>อายุการใช้งาน</td><td>10–15 ปี</td></tr>
+        <tr><td>ค่า PM ต่อปี (ประมาณ)</td><td>~45 MB</td></tr>
+        <tr><td><strong>TCO 5 ปี</strong></td><td><strong>~2,044 MB</strong></td></tr>
+      </table>
+      <div class="progress-bar" style="margin-top:10px"><div class="progress-fill" style="width:100%;background:#3A7BD5"></div></div>
+    </div>
+    <div class="op-card selected">
+      <div class="op-card-title">OP2 — Recon + New <span class="badge badge-success">✓ เลือกใช้</span></div>
+      <table>
+        <tr><td>ค่าเครื่องจักร Recon+New</td><td>929 MB</td></tr>
+        <tr><td>ราคาต่อเมตร</td><td>91,069 ฿/m</td></tr>
+        <tr><td>อายุการใช้งาน</td><td>5–8 ปี</td></tr>
+        <tr><td>ค่า PM ต่อปี (ประมาณ)</td><td>~55 MB</td></tr>
+        <tr><td><strong>TCO 5 ปี</strong></td><td><strong>~1,204 MB</strong></td></tr>
+      </table>
+      <div class="progress-bar" style="margin-top:10px"><div class="progress-fill" style="width:51%;background:#1A8A55"></div></div>
+      <div class="op-notes">
+        <span class="plus">✓ ประหยัดค่าลงทุนเริ่มต้น ~890 MB (49%)</span><br>
+        <span class="plus">✓ ลดระยะเวลาก่อสร้าง (Recon พร้อมเร็วกว่า)</span><br>
+        <span class="minus">✗ ค่า PM สูงกว่า ~10 MB/ปี (ต้องติดตาม)</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-title orange">หมวดหมู่เครื่องจักรหลัก — สัดส่วนงบ OP2</div>
+  <div class="table-wrap">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>รายการ</th><th>จำนวน</th><th>ใหม่</th><th>Recon</th>
+          <th>มูลค่า (ล้านบาท)</th><th>% งบรวม</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="row-critical">
+          <td><strong>Conveyor Belt BW2200, ST3500–4000</strong></td>
+          <td>20,200 m</td><td>17,700</td><td>2,500</td>
+          <td><strong>316.2</strong></td><td><span class="badge badge-danger">34% ★ สูงสุด</span></td>
+        </tr>
+        <tr class="row-warn">
+          <td>Carry/Return/Impact Roller</td>
+          <td>8,900 ชุด</td><td>7,100</td><td>—</td>
+          <td><strong>175.5</strong></td><td><span class="badge badge-warn">18.9%</span></td>
+        </tr>
+        <tr class="row-warn">
+          <td>Electric House (E-House)</td>
+          <td>13 ชุด</td><td>7</td><td>3</td>
+          <td><strong>101.4</strong></td><td><span class="badge badge-warn">10.9%</span></td>
+        </tr>
+        <tr>
+          <td>โครงสร้าง Belt Frame + Station</td>
+          <td>—</td><td>—</td><td>—</td>
+          <td><strong>98.6</strong></td><td><span class="badge badge-info">10.6%</span></td>
+        </tr>
+        <tr>
+          <td>Return / Impact / Pulley + อื่น ๆ</td>
+          <td>—</td><td>—</td><td>—</td>
+          <td><strong>123.3</strong></td><td><span class="badge badge-info">13.3%</span></td>
+        </tr>
+        <tr>
+          <td>Resistor Start & Slip Ring</td>
+          <td>46 ชุด</td><td>30</td><td>0</td>
+          <td><strong>65.7</strong></td><td><span class="badge badge-info">7.1%</span></td>
+        </tr>
+        <tr>
+          <td>Cable MV&amp;LV + Safety System</td>
+          <td>1 ระบบ</td><td>1</td><td>0</td>
+          <td><strong>57.1</strong></td><td><span class="badge badge-info">6.1%</span></td>
+        </tr>
+        <tr class="row-ok">
+          <td>Motor 1,500 kW, 6.6 kV</td>
+          <td>39 ชุด</td><td>3</td><td>36</td>
+          <td><strong>26.9</strong></td><td><span class="badge badge-success">2.9%</span></td>
+        </tr>
+        <tr class="row-ok">
+          <td>Gearbox + Oil Cooler + Brake</td>
+          <td>31 ชุด</td><td>1</td><td>30</td>
+          <td><strong>16.7</strong></td><td><span class="badge badge-success">1.8%</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+</div><!-- /overview -->
+
+<!-- ══ TAB 2: COST ANALYSIS ══ -->
+<div class="panel" id="tab-cost">
+
+  <div class="highlight-box info">
+    <span class="icon">💡</span>
+    <div><strong>สรุปกลยุทธ์:</strong> OP2 ประหยัดงบลงทุน 890 MB แต่ต้องบริหาร Recon equipment ด้วย PM ที่เข้มแข็ง โดยเฉพาะ Belt (34%) + Motor Recon 36 ชุด</div>
+  </div>
+
+  <div class="section-title">Cost Breakdown — การวิเคราะห์ต้นทุนตามหมวด</div>
+  <div class="card">
+    <div id="cost-bars" class="cf-bar-wrap"></div>
+    <div id="cost-legend" style="display:flex;flex-wrap:wrap;gap:10px;font-size:11px;color:#4A5A78;margin-top:4px;padding-top:8px;border-top:1px solid #D8E2F0;"></div>
+  </div>
+
+  <div class="section-title orange">ข้อเสนอแนะการบริหารต้นทุน — Risk Priority</div>
+  <div class="table-wrap">
+    <table class="table">
+      <thead><tr><th>รายการ</th><th>สัดส่วนงบ</th><th>สถานะความเสี่ยง</th><th>คำแนะนำ</th></tr></thead>
+      <tbody>
+        <tr class="row-critical">
+          <td><strong>Conveyor Belt BW2200 ST3500–4000</strong></td>
+          <td><strong>34%</strong></td>
+          <td><span class="badge badge-danger">⚠ High Risk</span></td>
+          <td>ติดตาม wear indicator ทุกเดือน — ประเมิน belt splice ก่อนกำหนด — ใช้ online belt condition sensor</td>
+        </tr>
+        <tr class="row-warn">
+          <td>Motor 1,500 kW (Recon ×36 ชุด)</td>
+          <td>2.9%</td>
+          <td><span class="badge badge-warn">Medium</span></td>
+          <td>Vibration Analysis + IR Thermography ทุก 3 เดือน — ตรวจ Insulation Resistance ก่อน Start หลัง Shutdown</td>
+        </tr>
+        <tr class="row-warn">
+          <td>Gearbox (Recon ×30 ชุด)</td>
+          <td>1.8%</td>
+          <td><span class="badge badge-warn">Medium</span></td>
+          <td>Oil Analysis ทุก 3 เดือน — ติดตั้ง Oil Condition Sensor — Borescope gear tooth inspection ปีละ 1 ครั้ง</td>
+        </tr>
+        <tr class="row-ok">
+          <td>E-House / Electrical System</td>
+          <td>10.9%</td>
+          <td><span class="badge badge-success">Low</span></td>
+          <td>Thermographic scan ระบบไฟฟ้าทุก 6 เดือน — ตรวจ power quality ทุกไตรมาส</td>
+        </tr>
+        <tr class="row-ok">
+          <td>Roller Carry/Return/Impact</td>
+          <td>18.9%</td>
+          <td><span class="badge badge-success">Low</span></td>
+          <td>ตรวจสอบด้วย Acoustic/Visual ทุกเดือน — เปลี่ยนตาม condition ไม่ใช่ตาม time</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+</div><!-- /cost -->
+
+<!-- ══ TAB 3: CASH FLOW ══ -->
+<div class="panel" id="tab-cashflow">
+
+  <div class="metric-grid">
+    <div class="metric orange">
+      <div class="metric-label">งบรวมโครงการ OP2</div>
+      <div class="metric-value">929 MB</div>
+      <div class="metric-sub">ล้านบาท</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label">Payment Terms</div>
+      <div class="metric-value">LC + Credit</div>
+      <div class="metric-sub">70% LC, 30% Credit</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label">Advance Payment</div>
+      <div class="metric-value">ไม่มี</div>
+      <div class="metric-sub">0% upfront</div>
+    </div>
+    <div class="metric red">
+      <div class="metric-label">⚠ Peak Month</div>
+      <div class="metric-value">ม.ค. 69</div>
+      <div class="metric-sub">~191 ล้านบาท / เดือน</div>
+    </div>
+  </div>
+
+  <div class="section-title">กราฟ Cash Flow รายเดือน (ล้านบาท)</div>
+  <div class="card">
+    <div id="cf-chart-wrap" style="height:200px;position:relative">
+      <canvas id="cfChart" role="img" aria-label="กราฟ Cash Flow รายเดือน"></canvas>
+    </div>
+  </div>
+
+  <div class="section-title orange">ตารางสรุป Cash Flow OP2 (ธ.ค. 2568 – ก.ค. 2569)</div>
+  <div class="table-wrap">
+    <table class="table cf-table">
+      <thead><tr><th>เดือน</th><th>ปีงบประมาณ</th><th>จำนวน (ล้านบาท)</th><th>% สะสม</th><th>หมายเหตุ</th></tr></thead>
+      <tbody id="cf-table"></tbody>
+    </table>
+  </div>
+
+</div><!-- /cashflow -->
+
+<!-- ══ TAB 4: WBS ══ -->
+<div class="panel" id="tab-wbs">
+
+  <div class="highlight-box info">
+    <span class="icon">📌</span>
+    <div><strong>โครงสร้าง WBS:</strong> แบ่งเป็น 5 หมวดหลัก — Project Management · Civil &amp; Structure · Mechanical · E&amp;I · Commissioning รวม 9 สถานี Line A+B ความยาว 10,202 เมตร</div>
+  </div>
+
+  <div class="section-title">Work Breakdown Structure — โครงการฟื้นฟู OB.9</div>
+  <div class="card">
+    <div class="wbs-container">
+
+      <div class="wbs-item wbs-l1"><div class="wbs-title">1.0 การจัดการโครงการ (Project Management)</div></div>
+      <div class="wbs-item wbs-l2"><div class="wbs-title">1.1 การวางแผนและจัดทำงบประมาณ</div><div class="wbs-sub">Cost Estimate · Budget Approval · Cash Flow Plan</div></div>
+      <div class="wbs-item wbs-l2"><div class="wbs-title">1.2 การจัดซื้อจัดจ้าง (Procurement)</div><div class="wbs-sub">RFQ · PO · LC / Credit Terms · Supplier QC</div></div>
+      <div class="wbs-item wbs-l2"><div class="wbs-title">1.3 การควบคุมโครงการ</div><div class="wbs-sub">S-Curve · Progress Report · Change Order · Cost Control</div></div>
+
+      <div class="wbs-item wbs-l1"><div class="wbs-title">2.0 งานโยธาและโครงสร้าง (Civil &amp; Structure)</div></div>
+      <div class="wbs-item wbs-l2"><div class="wbs-title">2.1 งานเตรียมพื้นที่และฐานราก</div><div class="wbs-sub">Surveying · Earthwork · Foundation</div></div>
+      <div class="wbs-item wbs-l2"><div class="wbs-title">2.2 โครงสร้าง Head/Tail Station (9 สถานี)</div><div class="wbs-sub">Recon ×9 สถานี — 10.99 ล้านบาท</div></div>
+      <div class="wbs-item wbs-l2"><div class="wbs-title">2.3 Belt Frame Shiftable + Fixed Type</div><div class="wbs-sub">900 Set · 87.6 ล้านบาท รวม</div></div>
+      <div class="wbs-item wbs-l2"><div class="wbs-title">2.4 Rail System (4,132 m)</div><div class="wbs-sub">Recon · 3.01 ล้านบาท</div></div>
+
+      <div class="wbs-item wbs-l1"><div class="wbs-title">3.0 งานระบบกลไก (Mechanical) — 316.2 MB (34% of budget)</div></div>
+      <div class="wbs-item wbs-l2"><div class="wbs-title">3.1 Conveyor Belt BW2200, ST3500–4000 ⭐ รายการใหญ่สุด</div><div class="wbs-sub">20,200 m · 316.2 ล้านบาท · 34% of budget</div></div>
+      <div class="wbs-item wbs-l3"><div class="wbs-title">3.1.1 Belt ใหม่ 17,700 m</div><div class="wbs-sub">@17,137 ฿/m = 303 ล้านบาท</div></div>
+      <div class="wbs-item wbs-l3"><div class="wbs-title">3.1.2 Belt Recon 2,500 m</div><div class="wbs-sub">@5,141 ฿/m = 12.9 ล้านบาท</div></div>
+      <div class="wbs-item wbs-l2"><div class="wbs-title">3.2 Gearbox + Oil Cooler + Brake Set</div><div class="wbs-sub">31 ชุด (1 ใหม่ + 30 Recon) · 16.7 ล้านบาท</div></div>
+      <div class="wbs-item wbs-l2"><div class="wbs-title">3.3 Pulley + Bearing + Housing</div><div class="wbs-sub">37 ชุด Recon · 11.7 ล้านบาท</div></div>
+      <div class="wbs-item wbs-l2"><div class="wbs-title">3.4 ลูกกลิ้ง Carry/Return/Impact</div><div class="wbs-sub">8,900 ชุด รวม · 175.5 ล้านบาท</div></div>
+      <div class="wbs-item wbs-l2"><div class="wbs-title">3.5 Take Up Winch + Belt Cleaner</div><div class="wbs-sub">9+18 ชุด · 8.5 ล้านบาท</div></div>
+
+      <div class="wbs-item wbs-l1"><div class="wbs-title">4.0 งานระบบไฟฟ้าและควบคุม (E&amp;I) — 255 MB</div></div>
+      <div class="wbs-item wbs-l2"><div class="wbs-title">4.1 Motor Drive 1,500 kW, 6.6 kV</div><div class="wbs-sub">39 ชุด (3 ใหม่ + 36 Recon) · 26.9 ล้านบาท</div></div>
+      <div class="wbs-item wbs-l2"><div class="wbs-title">4.2 Resistor Start + Slip Ring</div><div class="wbs-sub">30 ชุดใหม่ · 65.7 ล้านบาท</div></div>
+      <div class="wbs-item wbs-l2"><div class="wbs-title">4.3 Electric House (E-House)</div><div class="wbs-sub">13 ชุด (7 ใหม่ + 3 Recon) · 101.4 ล้านบาท</div></div>
+      <div class="wbs-item wbs-l2"><div class="wbs-title">4.4 Cable MV&amp;LV + Safety Device</div><div class="wbs-sub">57.1 ล้านบาท รวม</div></div>
+      <div class="wbs-item wbs-l2"><div class="wbs-title">4.5 Power Line 22 kV + Transformer</div><div class="wbs-sub">4.3 ล้านบาท</div></div>
+      <div class="wbs-item wbs-l2"><div class="wbs-title">4.6 PLC &amp; SCADA System</div><div class="wbs-sub">1 ระบบ · 0.975 ล้านบาท</div></div>
+
+      <div class="wbs-item wbs-l1"><div class="wbs-title">5.0 งานทดสอบและส่งมอบ (Commissioning)</div></div>
+      <div class="wbs-item wbs-l2"><div class="wbs-title">5.1 No-Load Test</div><div class="wbs-sub">ทดสอบเดินเครื่องเปล่า · ตรวจ Alignment</div></div>
+      <div class="wbs-item wbs-l2"><div class="wbs-title">5.2 Load Test + Performance Verification</div><div class="wbs-sub">ทดสอบ Capacity · Power · Belt Tension</div></div>
+      <div class="wbs-item wbs-l2"><div class="wbs-title">5.3 Hand Over + Documentation</div><div class="wbs-sub">As-built · O&amp;M Manual · Training</div></div>
+    </div>
+  </div>
+
+</div><!-- /wbs -->
+
+<!-- ══ TAB 5: PM ══ -->
+<div class="panel" id="tab-pm">
+
+  <div class="metric-grid">
+    <div class="metric purple">
+      <div class="metric-label">กำลังมอเตอร์</div>
+      <div class="metric-value">1,500 kW</div>
+      <div class="metric-sub">6.6 kV, 3-Phase, Slip Ring</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label">Belt Width / Strength</div>
+      <div class="metric-value">BW 2200</div>
+      <div class="metric-sub">ST4000 N/mm</div>
+    </div>
+    <div class="metric orange">
+      <div class="metric-label">จำนวน Drive Unit</div>
+      <div class="metric-value">39 ชุด</div>
+      <div class="metric-sub">3 ใหม่ + 36 Recon</div>
+    </div>
+    <div class="metric green">
+      <div class="metric-label">เป้าหมายระดับ PM</div>
+      <div class="metric-value">Predictive</div>
+      <div class="metric-sub">PM → CBM → PdM</div>
+    </div>
+  </div>
+
+  <div class="section-title">WBS แผนการบำรุงรักษา — Motor Drive BW2200 ST4000</div>
+  <div class="card">
+    <div class="pm-tabs">
+      <button class="pm-tab active" onclick="showPM('pm1', this)">1. Preventive (PM)</button>
+      <button class="pm-tab" onclick="showPM('pm2', this)">2. Condition-Based (CBM)</button>
+      <button class="pm-tab" onclick="showPM('pm3', this)">3. Predictive (PdM)</button>
+    </div>
+
+    <!-- PM1 -->
+    <div id="pm1">
+      <div class="wbs-container">
+        <div class="wbs-item wbs-l1"><div class="wbs-title">PM-1: Preventive Maintenance (ทุก 500 ชม. / เดือน)</div></div>
+        <div class="wbs-item wbs-l2"><div class="wbs-title">PM-1.1 Motor 1,500 kW — ตรวจสอบรายเดือน</div></div>
+        <div class="wbs-item wbs-l3"><div class="wbs-title">ตรวจสอบ Vibration ด้วย Portable Meter</div><div class="wbs-sub">Limit: ≤ 4.5 mm/s RMS · บันทึก Trend</div></div>
+        <div class="wbs-item wbs-l3"><div class="wbs-title">วัดอุณหภูมิ Bearing DE/NDE</div><div class="wbs-sub">IR Gun / RTD · Limit: ≤ 80°C หรือ ΔT ≤ 20°C จาก ambient</div></div>
+        <div class="wbs-item wbs-l3"><div class="wbs-title">ตรวจสอบ Insulation Resistance</div><div class="wbs-sub">Megger 5 kV · ≥ 1,000 MΩ ก่อน Start หลัง Shutdown ยาว</div></div>
+        <div class="wbs-item wbs-l3"><div class="wbs-title">ตรวจสอบ Cooling / Ventilation</div><div class="wbs-sub">Air filter · Fan blade · Air gap clearance</div></div>
+        <div class="wbs-item wbs-l3"><div class="wbs-title">ตรวจสอบ Cable Termination + Earthing</div><div class="wbs-sub">Torque check · Corrosion · Loosening</div></div>
+        <div class="wbs-item wbs-l2"><div class="wbs-title">PM-1.2 Gearbox 1,500 kW — ตรวจสอบทุก 3 เดือน</div></div>
+        <div class="wbs-item wbs-l3"><div class="wbs-title">วิเคราะห์ Gear Oil (Oil Sampling)</div><div class="wbs-sub">Viscosity · Contamination · Metal Particle · Water content</div></div>
+        <div class="wbs-item wbs-l3"><div class="wbs-title">ตรวจสอบ Oil Level + สภาพน้ำมัน</div><div class="wbs-sub">Sight Glass · ไม่ต่ำกว่า MIN level</div></div>
+        <div class="wbs-item wbs-l3"><div class="wbs-title">วัดอุณหภูมิ Oil + Housing</div><div class="wbs-sub">Oil ≤ 80°C · Housing ≤ 70°C</div></div>
+        <div class="wbs-item wbs-l3"><div class="wbs-title">ตรวจสอบ Oil Seal + Leakage</div><div class="wbs-sub">Input/Output shaft · Breather valve condition</div></div>
+        <div class="wbs-item wbs-l2"><div class="wbs-title">PM-1.3 Oil Cooling System — ตรวจสอบทุก 6 เดือน</div></div>
+        <div class="wbs-item wbs-l3"><div class="wbs-title">ตรวจสอบ Cooler Effectiveness</div><div class="wbs-sub">Temp differential ≥ 5°C inlet vs outlet</div></div>
+        <div class="wbs-item wbs-l3"><div class="wbs-title">ทำความสะอาด Heat Exchanger</div><div class="wbs-sub">Flush · Chemical clean ตาม interval</div></div>
+        <div class="wbs-item wbs-l3"><div class="wbs-title">ตรวจสอบ Pump + Valve + Pressure</div><div class="wbs-sub">Flow rate · Relief valve setting</div></div>
+      </div>
+    </div>
+
+    <!-- PM2 -->
+    <div id="pm2" style="display:none">
+      <div class="wbs-container">
+        <div class="wbs-item wbs-l1"><div class="wbs-title">CBM-2: Condition-Based Monitoring (ต่อเนื่อง / Real-time)</div></div>
+        <div class="wbs-item wbs-l2"><div class="wbs-title">CBM-2.1 Vibration Monitoring — Motor &amp; Gearbox</div></div>
+        <div class="wbs-item wbs-l3"><div class="wbs-title">ติดตั้ง Wireless Vibration Sensor</div><div class="wbs-sub">ตำแหน่ง: Motor DE, Motor NDE, Gearbox Input, Output Shaft</div></div>
+        <div class="wbs-item wbs-l3"><div class="wbs-title">กำหนด Alarm Level</div><div class="wbs-sub">Alert: 4.5 mm/s · Trip: 7.1 mm/s (ISO 10816-3)</div></div>
+        <div class="wbs-item wbs-l3"><div class="wbs-title">วิเคราะห์ Spectrum (FFT)</div><div class="wbs-sub">Unbalance · Misalignment · Bearing defect · Gear mesh frequency</div></div>
+        <div class="wbs-item wbs-l2"><div class="wbs-title">CBM-2.2 Thermal Monitoring</div></div>
+        <div class="wbs-item wbs-l3"><div class="wbs-title">ติดตั้ง RTD/Thermocouple ที่ Bearing</div><div class="wbs-sub">4 จุด/Motor · บันทึกทุก 5 นาที · Trend Analysis</div></div>
+        <div class="wbs-item wbs-l3"><div class="wbs-title">IR Thermography รายไตรมาส</div><div class="wbs-sub">Electrical connections · Stator · Gearbox housing</div></div>
+        <div class="wbs-item wbs-l2"><div class="wbs-title">CBM-2.3 Oil Condition Monitoring</div></div>
+        <div class="wbs-item wbs-l3"><div class="wbs-title">Online Oil Sensor (Particle Counter)</div><div class="wbs-sub">NAS 1638 Level ≤ 8 · บันทึก continuous</div></div>
+        <div class="wbs-item wbs-l3"><div class="wbs-title">Lab Analysis ทุก 3 เดือน</div><div class="wbs-sub">Ferrography · Spectrographic · Viscosity · TAN</div></div>
+        <div class="wbs-item wbs-l2"><div class="wbs-title">CBM-2.4 Electrical Monitoring</div></div>
+        <div class="wbs-item wbs-l3"><div class="wbs-title">Motor Current Signature Analysis (MCSA)</div><div class="wbs-sub">ตรวจ Rotor bar · Air gap · Bearing via current waveform</div></div>
+        <div class="wbs-item wbs-l3"><div class="wbs-title">Power Quality Monitoring</div><div class="wbs-sub">Voltage imbalance ≤ 2% · Harmonic THD ≤ 5%</div></div>
+      </div>
+    </div>
+
+    <!-- PM3 -->
+    <div id="pm3" style="display:none">
+      <div class="wbs-container">
+        <div class="wbs-item wbs-l1"><div class="wbs-title">PdM-3: Predictive Maintenance (AI-Assisted — เป้าหมายระยะยาว)</div></div>
+        <div class="wbs-item wbs-l2"><div class="wbs-title">PdM-3.1 ระบบเก็บข้อมูล (Data Collection Platform)</div></div>
+        <div class="wbs-item wbs-l3"><div class="wbs-title">SCADA / IIoT Integration</div><div class="wbs-sub">Sensor → Edge Gateway → Cloud/Server · Protocol: Modbus / OPC-UA</div></div>
+        <div class="wbs-item wbs-l3"><div class="wbs-title">Database ประวัติเครื่องจักร</div><div class="wbs-sub">Equipment History · Work Order · Failure Mode (FMEA)</div></div>
+        <div class="wbs-item wbs-l2"><div class="wbs-title">PdM-3.2 Machine Learning / Analytics</div></div>
+        <div class="wbs-item wbs-l3"><div class="wbs-title">Anomaly Detection Model</div><div class="wbs-sub">Baseline Normal → Detect deviation → Alert ก่อน Failure</div></div>
+        <div class="wbs-item wbs-l3"><div class="wbs-title">Remaining Useful Life (RUL) Estimation</div><div class="wbs-sub">Bearing RUL · Belt wear prediction · Oil degradation model</div></div>
+        <div class="wbs-item wbs-l3"><div class="wbs-title">Failure Mode Pattern Recognition</div><div class="wbs-sub">Vibration signature library · Correlation with process data</div></div>
+        <div class="wbs-item wbs-l2"><div class="wbs-title">PdM-3.3 แผน Maintenance Optimization</div></div>
+        <div class="wbs-item wbs-l3"><div class="wbs-title">Dynamic Maintenance Scheduling</div><div class="wbs-sub">Plan ตาม Condition Score แทน Fixed Interval</div></div>
+        <div class="wbs-item wbs-l3"><div class="wbs-title">Spare Parts Optimization</div><div class="wbs-sub">คำนวณ Safety Stock จาก RUL + Lead Time</div></div>
+        <div class="wbs-item wbs-l3"><div class="wbs-title">KPI Dashboard</div><div class="wbs-sub">MTBF · MTTR · OEE · PM Compliance · Cost/Availability</div></div>
+        <div class="wbs-item wbs-l2"><div class="wbs-title">PdM-3.4 Roadmap การพัฒนา (12–24 เดือน)</div></div>
+        <div class="wbs-item wbs-l3"><div class="wbs-title">เดือน 0–3: ติดตั้ง Sensor + เก็บ Baseline</div><div class="wbs-sub">Vibration · Temp · Oil · Current sensors ทุก Drive Unit</div></div>
+        <div class="wbs-item wbs-l3"><div class="wbs-title">เดือน 4–9: สร้าง CBM Protocol + FMEA</div><div class="wbs-sub">กำหนด Alarm Limits · ทดสอบ Alert System · Train Technician</div></div>
+        <div class="wbs-item wbs-l3"><div class="wbs-title">เดือน 10–18: Pilot AI Model (1–2 Drive Units)</div><div class="wbs-sub">Collect failure data · Train model · Validate with manual PM</div></div>
+        <div class="wbs-item wbs-l3"><div class="wbs-title">เดือน 19–24: Roll-out PdM ทั้งระบบ</div><div class="wbs-sub">Full deployment · KPI measurement · Cost saving report</div></div>
+      </div>
+    </div>
+  </div><!-- /card -->
+
+  <div class="section-title orange">แบบฟอร์มตรวจสอบ Drive Unit — Inspection Checklist</div>
+  <div class="table-wrap">
+    <table class="table">
+      <thead>
+        <tr><th style="min-width:170px">รายการตรวจ</th><th>ความถี่</th><th>เครื่องมือ</th><th>Limit / Accept</th><th>Action if Fail</th></tr>
+      </thead>
+      <tbody>
+        <tr class="checklist-section-row"><td colspan="5">MOTOR 1,500 kW</td></tr>
+        <tr><td>Vibration Overall (RMS)</td><td>รายเดือน</td><td>Vibrometer / FFT</td><td><strong>≤ 4.5 mm/s</strong></td><td>Balancing / Alignment / Bearing</td></tr>
+        <tr><td>Motor Bearing Temp (DE/NDE)</td><td>รายสัปดาห์</td><td>IR Gun / RTD</td><td><strong>≤ 80°C</strong></td><td>Grease / Replace bearing</td></tr>
+        <tr class="row-critical"><td><strong>Insulation Resistance ⭐ Critical</strong></td><td>ทุก Shutdown</td><td>Megger 5 kV</td><td><strong>≥ 1,000 MΩ</strong></td><td>Dry out / Rewind winding</td></tr>
+        <tr><td>Cooling Airflow / Ventilation</td><td>ทุก 3 เดือน</td><td>Anemometer / Visual</td><td>Per design spec</td><td>Clean filter / Check fan</td></tr>
+        <tr class="checklist-section-row"><td colspan="5">GEARBOX</td></tr>
+        <tr><td>Oil Level (Sight Glass)</td><td>รายสัปดาห์</td><td>Sight Glass</td><td><strong>MIN–MAX Range</strong></td><td>Top up approved oil type</td></tr>
+        <tr><td>Oil Temperature</td><td>Continuous</td><td>RTD Online</td><td><strong>≤ 80°C</strong></td><td>Check cooler / Load reduction</td></tr>
+        <tr class="row-warn"><td><strong>Oil Analysis (Lab Sample) ⭐</strong></td><td>ทุก 3 เดือน</td><td>Lab Sample Kit</td><td><strong>NAS 1638 ≤ 8</strong></td><td>Filter / Change oil immediately</td></tr>
+        <tr><td>Gear Noise / Vibration (FFT)</td><td>รายเดือน</td><td>Stethoscope / FFT</td><td>ไม่มีเสียงผิดปกติ</td><td>Inspect gear teeth + bearing</td></tr>
+        <tr class="checklist-section-row"><td colspan="5">OIL COOLING SYSTEM</td></tr>
+        <tr><td>ΔT Cooler (Inlet vs Outlet)</td><td>ทุก 6 เดือน</td><td>Thermometer</td><td><strong>ΔT ≥ 5°C</strong></td><td>Clean heat exchanger tubes</td></tr>
+        <tr><td>Pump Pressure</td><td>รายสัปดาห์</td><td>Pressure Gauge</td><td>Per design spec</td><td>Check pump / filter blockage</td></tr>
+        <tr class="row-critical"><td><strong>Oil Leakage Inspection ⭐</strong></td><td>รายสัปดาห์</td><td>Visual / UV Light</td><td><strong>ไม่มี Leakage</strong></td><td>Tighten fitting / Replace seal</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+</div><!-- /pm -->
+
+<div class="footer">
+  ITD-MM9-DA-2026-001 · Rehabilitation of Conveyor Belt OB.9 · Mae Moh Mine Contract 9 · Rev.01
+</div>
+
+</div><!-- /container -->
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+function showTab(id, el) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tabs .tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-' + id).classList.add('active');
+  el.classList.add('active');
+  if (id === 'cashflow') setTimeout(buildCF, 100);
+  if (id === 'cost') buildCostBars();
+}
+
+function showPM(id, el) {
+  ['pm1','pm2','pm3'].forEach(p => { document.getElementById(p).style.display = 'none'; });
+  document.getElementById(id).style.display = 'block';
+  document.querySelectorAll('.pm-tabs .pm-tab').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+}
+
+/* ── Cash Flow ── */
+const cfData = [
+  {m:'ธ.ค. 68', v:128.5, peak:false},
+  {m:'ม.ค. 69', v:191.5, peak:true},
+  {m:'ก.พ. 69', v:20.3,  peak:false},
+  {m:'มี.ค. 69', v:164.7, peak:false},
+  {m:'เม.ย. 69', v:97.2,  peak:false},
+  {m:'พ.ค. 69', v:136.2, peak:false},
+  {m:'มิ.ย. 69', v:88.6,  peak:false},
+  {m:'ก.ค. 69', v:65.3,  peak:false},
+];
+let cfBuilt = false;
+function buildCF() {
+  if (cfBuilt) return; cfBuilt = true;
+  let cum = 0;
+  const tbody = document.getElementById('cf-table');
+  cfData.forEach((d, i) => {
+    cum += d.v;
+    const isPeak = d.peak;
+    const rowClass = isPeak ? ' class="peak-row"' : (i%2===1 ? ' style="background:#F8FAFD"' : '');
+    tbody.innerHTML += `<tr${rowClass}>
+      <td><strong>${d.m}</strong></td>
+      <td>${i < 2 ? '2568' : '2569'}</td>
+      <td style="font-weight:700;color:#0D2657">${d.v.toFixed(1)}</td>
+      <td>${(cum / 929 * 100).toFixed(1)}%</td>
+      <td>${isPeak ? '<span class="badge badge-danger">⚠ Peak Month</span>' : '—'}</td>
+    </tr>`;
+  });
+  new Chart(document.getElementById('cfChart'), {
+    type: 'bar',
+    data: {
+      labels: cfData.map(d => d.m),
+      datasets: [{
+        label: 'Cash Out (ล้านบาท)',
+        data: cfData.map(d => d.v),
+        backgroundColor: cfData.map(d => d.peak ? '#C02020' : '#1A4A8A'),
+        borderColor: cfData.map(d => d.peak ? '#8A0A0A' : '#0D2657'),
+        borderWidth: 1,
+        borderRadius: 4,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: ctx => ctx.parsed.y + ' MB' } }
+      },
+      scales: {
+        y: { ticks: { callback: v => v + 'M' }, grid: { color: '#E0E8F4' } },
+        x: { grid: { display: false } }
+      }
+    }
+  });
+}
+
+/* ── Cost Bars ── */
+const costItems = [
+  {label:'Belt',       val:316, color:'#C02020'},
+  {label:'Roller',     val:175, color:'#E07820'},
+  {label:'E-House',    val:101, color:'#1A4A8A'},
+  {label:'Resistor',   val:66,  color:'#6340C0'},
+  {label:'Cable',      val:57,  color:'#1A8A55'},
+  {label:'Frame',      val:99,  color:'#5A8A10'},
+  {label:'Motor',      val:27,  color:'#0A6040'},
+  {label:'Gearbox',    val:17,  color:'#6A7A98'},
+  {label:'Other',      val:71,  color:'#C04080'},
+];
+function buildCostBars() {
+  const wrap = document.getElementById('cost-bars');
+  if (wrap.children.length > 0) return;
+  const max = Math.max(...costItems.map(d => d.val));
+  costItems.forEach(d => {
+    const h = Math.max(4, Math.round(d.val / max * 130));
+    wrap.innerHTML += `<div class="cf-bar-col">
+      <div class="cf-val">${d.val}M</div>
+      <div class="cf-bar" style="height:${h}px;background:${d.color}"></div>
+      <div class="cf-label">${d.label}</div>
+    </div>`;
+  });
+  const leg = document.getElementById('cost-legend');
+  costItems.forEach(d => {
+    leg.innerHTML += `<span style="display:flex;align-items:center;gap:4px;font-weight:600">
+      <span style="width:12px;height:12px;border-radius:3px;background:${d.color};border:1px solid rgba(0,0,0,0.15)"></span>
+      ${d.label}: ${(d.val/929*100).toFixed(1)}%
+    </span>`;
+  });
+}
+</script>
+</body>
+</html>

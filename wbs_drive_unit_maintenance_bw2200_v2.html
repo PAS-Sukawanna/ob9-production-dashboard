@@ -1,0 +1,889 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>WBS — Drive Unit Maintenance BW2200 ST4000</title>
+<style>
+/* ══ BASE ══ */
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',Arial,sans-serif;font-size:14px;background:#F0F4FA;color:#1A2340}
+
+/* ══ PAGE HEADER ══ */
+.page-header{background:linear-gradient(135deg,#0D2657 0%,#1A4A8A 60%,#1F6A9A 100%);padding:18px 24px 14px;border-bottom:4px solid #F4A020}
+.page-header h1{color:#fff;font-size:18px;font-weight:700}
+.page-header .sub{color:#B8D4F0;font-size:12px;margin-top:3px}
+.hbadges{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
+.hb{padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600}
+.hb-orange{background:#F4A020;color:#1A2340}
+.hb-white{background:rgba(255,255,255,0.18);color:#fff;border:1px solid rgba(255,255,255,0.35)}
+
+/* ══ LAYOUT ══ */
+.wrap{max-width:1000px;margin:0 auto;padding:18px 14px 40px}
+
+/* ══ USAGE GUIDE BANNER ══ */
+.guide-banner{background:#fff;border:2px solid #1A4A8A;border-radius:10px;margin-bottom:18px;overflow:hidden}
+.guide-header{background:#1A4A8A;color:#fff;padding:10px 16px;font-size:13px;font-weight:700;display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none}
+.guide-header .toggle-icon{margin-left:auto;font-size:14px;transition:transform .2s}
+.guide-header.open .toggle-icon{transform:rotate(180deg)}
+.guide-body{display:none;padding:14px 16px}
+.guide-body.show{display:block}
+.guide-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-top:10px}
+.guide-card{border-radius:8px;padding:12px 14px;border:1.5px solid}
+.gc-blue{background:#EBF3FF;border-color:#A8C8F8;color:#0A2A6A}
+.gc-teal{background:#E8F8F0;border-color:#A0D8C0;color:#064A30}
+.gc-amber{background:#FFF8E8;border-color:#F0D088;color:#6A4000}
+.gc-purple{background:#F0EEFB;border-color:#C8C0EC;color:#3A2888}
+.guide-card-title{font-weight:700;font-size:13px;margin-bottom:6px;display:flex;align-items:center;gap:6px}
+.guide-card-steps{list-style:none;font-size:12px;line-height:1.8}
+.guide-card-steps li{display:flex;gap:6px;align-items:flex-start}
+.guide-card-steps li::before{content:"▸";flex-shrink:0;opacity:.7}
+.guide-tip{margin-top:10px;font-size:12px;padding:8px 12px;border-radius:6px;background:#FFF8E0;border:1px solid #F0D080;color:#6A4000}
+
+/* ══ TABS ══ */
+.tabs{display:flex;gap:4px;margin-bottom:18px;flex-wrap:wrap;border-bottom:2.5px solid #C8D8F0;padding-bottom:4px}
+.tab{padding:8px 18px;border-radius:6px 6px 0 0;font-size:13px;font-weight:500;cursor:pointer;color:#5A6A8A;background:#E0E8F4;border:1.5px solid #C0CEDF;border-bottom:none;transition:all .15s;user-select:none}
+.tab:hover:not(.active){background:#CDD9EE}
+.tab.active{background:#fff;color:#0D2657;border-color:#3A7BD5;border-bottom:2.5px solid #fff;margin-bottom:-2.5px;font-weight:700}
+.panel{display:none}
+.panel.active{display:block}
+
+/* ══ SECTION TITLE ══ */
+.sec-title{font-size:14px;font-weight:700;color:#0D2657;margin:16px 0 10px;padding:7px 14px 7px 15px;background:#EBF1FB;border:1px solid #B8CEE8;border-left:5px solid #2A6BC8;border-radius:0 7px 7px 0}
+.sec-title.teal {background:#E6F7EE;border-color:#90CCB0;border-left-color:#1A8A55}
+.sec-title.amber{background:#FEF5E4;border-color:#E8CC80;border-left-color:#C87820}
+.sec-title.purple{background:#F2EFFE;border-color:#C0B4E8;border-left-color:#5A38C0}
+.sec-title.red  {background:#FEE8E8;border-color:#F0B0B0;border-left-color:#B82020}
+
+/* ══ WBS LEVEL 1 BLOCK ══ */
+.wbs-l1{background:#fff;border:2px solid #B8CCE8;border-radius:10px;margin-bottom:14px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.06)}
+.wbs-l1-header{display:flex;align-items:center;gap:10px;padding:13px 16px;cursor:pointer;user-select:none;border-bottom:1.5px solid transparent}
+.wbs-l1-header:hover{background:#F0F5FF}
+.l1-motor .wbs-l1-header{background:#EBF3FF;border-bottom-color:#B8CEF0}
+.l1-gear  .wbs-l1-header{background:#E6F7EE;border-bottom-color:#A0D4BC}
+.l1-oil   .wbs-l1-header{background:#FEF5E4;border-bottom-color:#E8CC80}
+.l1-safe  .wbs-l1-header{background:#F2EFFE;border-bottom-color:#C0B4E8}
+.l1-motor{border-color:#3A7BD5}
+.l1-gear {border-color:#1A8A55}
+.l1-oil  {border-color:#C87820}
+.l1-safe {border-color:#5A38C0}
+.wbs-badge{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;font-size:13px;font-weight:700;flex-shrink:0;border:2px solid}
+.b-blue  {background:#E6F1FB;color:#0C447C;border-color:#7AAAE8}
+.b-teal  {background:#E1F5EE;color:#085041;border-color:#70C8A0}
+.b-amber {background:#FAEEDA;color:#633806;border-color:#E8B840}
+.b-purple{background:#EEEDFE;color:#3C3489;border-color:#9880D8}
+.wbs-l1-title{font-weight:700;font-size:15px;flex:1}
+.wbs-l1-meta{font-size:12px;color:#5A6A88;background:#E8EEF8;padding:2px 10px;border-radius:12px;font-weight:600}
+.chevron{font-size:13px;color:#8898B8;transition:transform .2s}
+.wbs-l1.open .chevron{transform:rotate(90deg)}
+.wbs-body{display:none;padding:10px 14px 14px}
+.wbs-l1.open .wbs-body{display:block}
+
+/* ══ WBS LEVEL 2 BLOCK ══ */
+.wbs-l2{margin-top:10px;border-radius:8px;border:1.5px solid #D0DAE8;overflow:hidden}
+.wbs-l2-header{display:flex;align-items:center;gap:8px;padding:9px 12px;cursor:pointer;user-select:none}
+.wbs-l2-header:hover{filter:brightness(0.97)}
+.l2-daily  .wbs-l2-header{background:#EBF7F0;border-bottom:1px solid #C0E0D0}
+.l2-weekly .wbs-l2-header{background:#FEF9E6;border-bottom:1px solid #E8D890}
+.l2-monthly.wbs-l2-header,.l2-monthly > .wbs-l2-header{background:#EBF3FF;border-bottom:1px solid #B8CEF0}
+.l2-quarterly .wbs-l2-header{background:#F2EFFE;border-bottom:1px solid #C8BCE8}
+.l2-annual .wbs-l2-header{background:#FEF0E6;border-bottom:1px solid #F0C0A0}
+.wbs-l2-title{font-weight:600;font-size:13px;flex:1;color:#1A2340}
+.freq-tag{font-size:11px;padding:3px 9px;border-radius:20px;font-weight:700;border:1px solid transparent}
+.f-d{background:#D0F4E4;color:#065030;border-color:#80C8A8}
+.f-w{background:#FEF0C8;color:#724000;border-color:#E8C050}
+.f-m{background:#D8EEFF;color:#083878;border-color:#80B8E8}
+.f-q{background:#EAE8FF;color:#2C1888;border-color:#9888D8}
+.f-y{background:#FFE8D8;color:#782010;border-color:#F09060}
+.wbs-l2.open .chevron{transform:rotate(90deg)}
+.wbs-l2-body{display:none;padding:8px 12px 10px}
+.wbs-l2.open .wbs-l2-body{display:block}
+
+/* ══ TASK ROWS ══ */
+.task-row{display:flex;gap:10px;padding:8px 10px;border-bottom:1px solid #E4EAF4;align-items:flex-start;border-radius:4px;transition:background .1s}
+.task-row:last-child{border-bottom:none}
+.task-row:hover{background:#F4F8FF}
+.task-row.critical{background:#FFF0EE;border-left:4px solid #C82020;padding-left:8px}
+.task-row.critical:hover{background:#FFE8E4}
+.task-row.critical .task-note{color:#A02020}
+.task-cb{margin-top:3px;flex-shrink:0;accent-color:#2A6BC8;width:15px;height:15px;cursor:pointer}
+.task-text{font-size:13px;flex:1;line-height:1.55;color:#1A2340}
+.task-text strong{color:#0D2657}
+.task-note{font-size:11px;color:#5A6A88;margin-top:3px;padding:3px 8px;background:#F4F7FF;border-left:2px solid #A8BEDF;border-radius:0 4px 4px 0;line-height:1.5}
+.level-tag{font-size:10px;padding:2px 7px;border-radius:10px;margin-left:6px;vertical-align:middle;font-weight:700;border:1px solid transparent}
+.lv-pm  {background:#D8F4E8;color:#065030;border-color:#70C0A0}
+.lv-pro {background:#FEF0D0;color:#724000;border-color:#E8B840}
+.lv-pdm {background:#EAE8FF;color:#2C1888;border-color:#9888D8}
+
+/* ══ LEGEND BAR ══ */
+.legend-bar{margin-top:14px;padding:10px 14px;background:#F8FAFF;border:1.5px solid #C8D8EE;border-radius:8px;font-size:12px;color:#4A5A78;display:flex;gap:16px;flex-wrap:wrap;align-items:center}
+.legend-bar strong{color:#0D2657;margin-right:4px}
+
+/* ══ CHECKLIST FORM ══ */
+.form-section{background:#fff;border:2px solid #C8D8EE;border-radius:10px;padding:16px;margin-bottom:12px;box-shadow:0 1px 4px rgba(0,0,0,0.05)}
+.form-section-title{font-weight:700;font-size:14px;margin:0 0 12px;display:flex;align-items:center;gap:8px;padding-bottom:8px;border-bottom:2px solid #E4EEF8;color:#0D2657}
+.form-section.motor .form-section-title{border-bottom-color:#3A7BD5;color:#0A3878}
+.form-section.gear  .form-section-title{border-bottom-color:#1A8A55;color:#064A30}
+.form-section.oil   .form-section-title{border-bottom-color:#C87820;color:#6A4000}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+@media(max-width:560px){.form-grid{grid-template-columns:1fr}}
+.param-row{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid #EEF2F8;font-size:13px}
+.param-row:last-child{border-bottom:none}
+.param-label{flex:1;color:#3A4A68;font-weight:500}
+.param-input{width:110px;border:1.5px solid #B8CAE0;background:#F8FAFF;border-radius:6px;padding:5px 9px;font-size:12px;color:#1A2340;transition:border-color .15s}
+.param-input:focus{outline:none;border-color:#3A7BD5;background:#fff}
+.param-unit{font-size:11px;color:#8090B0;width:60px;font-weight:500}
+.param-unit.warn{color:#A04000;font-weight:700}
+.form-actions{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap}
+.btn-eval{padding:9px 22px;border-radius:7px;border:2px solid #1A4A8A;background:#1A4A8A;cursor:pointer;font-size:13px;font-weight:700;color:#fff;transition:all .15s}
+.btn-eval:hover{background:#0D2657;border-color:#0D2657}
+.btn-send{padding:9px 22px;border-radius:7px;border:2px solid #1A8A55;background:#fff;cursor:pointer;font-size:13px;color:#1A8A55;font-weight:600;transition:all .15s}
+.btn-send:hover{background:#E8F8EE}
+.result-box{border-radius:8px;margin-top:12px;display:none;overflow:hidden;border:2px solid #D8E4F4}
+.result-box.show{display:block}
+.result-box-header{background:#1A4A8A;color:#fff;padding:8px 14px;font-size:12px;font-weight:700}
+.alert-row{display:flex;align-items:flex-start;gap:10px;padding:9px 14px;font-size:13px;border-bottom:1px solid rgba(0,0,0,0.06)}
+.alert-row:last-child{border-bottom:none}
+.alert-ok  {background:#EBF8EF;color:#065030}
+.alert-warn{background:#FFFAE6;color:#7A4800}
+.alert-err {background:#FEF0EE;color:#900000}
+.alert-icon{font-size:15px;flex-shrink:0;margin-top:1px}
+
+/* ══ ROADMAP ══ */
+.kpi-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px}
+@media(max-width:500px){.kpi-grid{grid-template-columns:1fr 1fr}}
+.kpi-card{background:#fff;border-radius:8px;padding:14px;text-align:center;border:2px solid #C8D8F0;box-shadow:0 2px 6px rgba(0,0,0,0.05)}
+.kpi-title{font-size:11px;color:#5A6A88;margin-bottom:6px;font-weight:600;text-transform:uppercase;letter-spacing:.4px}
+.kpi-val{font-size:20px;font-weight:700;color:#0D2657}
+.kpi-target{font-size:10px;color:#8898B8;margin-top:3px}
+.road-phase{display:flex;gap:14px;margin-bottom:14px;padding:14px 16px;border-radius:10px;border:2px solid;box-shadow:0 2px 6px rgba(0,0,0,0.05)}
+.rp-blue  {border-color:#A8C8F8;background:#EBF3FF}
+.rp-teal  {border-color:#90D4B8;background:#E6F7EE}
+.rp-amber {border-color:#E8C050;background:#FEF5E4}
+.rp-purple{border-color:#C0B4E8;background:#F2EFFE}
+.road-phase-num{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;flex-shrink:0;border:2px solid}
+.road-phase-content{flex:1}
+.road-phase-title{font-weight:700;font-size:14px;margin-bottom:4px;color:#0D2657}
+.road-phase-period{font-size:11px;color:#5A6A88;margin-bottom:8px;font-weight:600;background:rgba(255,255,255,0.6);display:inline-block;padding:2px 8px;border-radius:10px}
+.road-items{display:flex;flex-direction:column;gap:5px}
+.road-item{font-size:12px;color:#2A3A58;display:flex;gap:7px;align-items:flex-start;line-height:1.5}
+.road-item::before{content:"▸";flex-shrink:0;opacity:.6;margin-top:1px}
+
+/* ══ PROGRESS ══ */
+.progress-wrap{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
+@media(max-width:500px){.progress-wrap{grid-template-columns:1fr}}
+.stat-card{background:#fff;border-radius:8px;padding:14px;border:2px solid #C8D8EE;box-shadow:0 2px 6px rgba(0,0,0,0.05)}
+.stat-label{font-size:11px;color:#5A6A88;margin-bottom:4px;font-weight:600;text-transform:uppercase;letter-spacing:.4px}
+.stat-val{font-size:24px;font-weight:700;color:#0D2657}
+.stat-sub{font-size:11px;color:#8898B8;margin-top:2px}
+.prog-bar{height:8px;border-radius:4px;background:#E4EAF4;margin-top:8px;overflow:hidden;border:1px solid #C8D4E8}
+.prog-fill{height:100%;border-radius:4px;transition:width .4s}
+.pf-blue  {background:#2A6BC8}
+.pf-teal  {background:#1A8A55}
+.pf-amber {background:#C87820}
+.pf-purple{background:#5A38C0}
+
+/* ══ INSTRUCTIONS INFO BOX ══ */
+.info-box{background:#EBF3FF;border:2px solid #A8C8F8;border-radius:8px;padding:12px 14px;margin-bottom:14px;font-size:12px;color:#0A2A6A;line-height:1.7}
+.info-box strong{color:#0D2657}
+.info-box.teal {background:#E6F7EE;border-color:#90D4B8;color:#044028}
+.info-box.amber{background:#FEF8E6;border-color:#E8C050;color:#5A3800}
+.info-box.red  {background:#FEF0EE;border-color:#F0A0A0;color:#800000}
+
+/* ══ RECORD TABLE ══ */
+.rec-table{width:100%;border-collapse:collapse;font-size:12px;margin-top:10px;border:2px solid #C8D8EE;border-radius:8px;overflow:hidden}
+.rec-table th{background:#1A4A8A;color:#fff;padding:8px 12px;text-align:left;font-weight:700;border-right:1px solid rgba(255,255,255,0.2)}
+.rec-table th:last-child{border-right:none}
+.rec-table td{padding:7px 12px;border-bottom:1px solid #D8E4F0;border-right:1px solid #E4EEF8;color:#1A2340;vertical-align:middle}
+.rec-table td:last-child{border-right:none}
+.rec-table tr:nth-child(even) td{background:#F4F8FF}
+.rec-table tr:last-child td{border-bottom:none}
+
+/* ══ PRINT ══ */
+@media print{
+  .tabs,.guide-banner,.form-actions,.btn-eval,.btn-send{display:none}
+  .panel{display:block!important;page-break-before:always}
+  .panel:first-of-type{page-break-before:avoid}
+  .wbs-body,.wbs-l2-body{display:block!important}
+}
+</style>
+</head>
+<body>
+
+<!-- PAGE HEADER -->
+<div class="page-header">
+  <h1>🔧 WBS — Drive Unit Maintenance Plan</h1>
+  <div class="sub">BW2200 ST4000 · Motor 1500kW 6.6kV Slip Ring · Gearbox 1500kW · Oil Cooling System</div>
+  <div class="hbadges">
+    <span class="hb hb-orange">84 Tasks รวม</span>
+    <span class="hb hb-white">PM → Proactive → PdM</span>
+    <span class="hb hb-white">ISO 10816-3</span>
+    <span class="hb hb-white">Mae Moh Mining</span>
+  </div>
+</div>
+
+<div class="wrap">
+
+<!-- ══ USAGE GUIDE ══ -->
+<div class="guide-banner">
+  <div class="guide-header" id="guide-toggle" onclick="toggleGuide()">
+    📖 วิธีใช้งาน Dashboard นี้ — คลิกเพื่อดู/ซ่อน
+    <span class="toggle-icon">▼</span>
+  </div>
+  <div class="guide-body show" id="guide-body">
+    <div class="guide-tip">💡 <strong>เป้าหมาย:</strong> ใช้ dashboard นี้เป็น <strong>เครื่องมือควบคุมการบำรุงรักษา</strong> ประจำวัน — ติ๊กถูก task ที่ทำเสร็จ กรอกค่าพารามิเตอร์จริง และดู progress ทุกวัน</div>
+    <div class="guide-grid">
+      <div class="guide-card gc-blue">
+        <div class="guide-card-title">📋 Tab 1: WBS Structure</div>
+        <ul class="guide-card-steps">
+          <li>คลิก header ชื่อ Motor / Gearbox / Oil Cooling / Safety เพื่อ <strong>ขยาย/ยุบ</strong></li>
+          <li>คลิก sub-header (1.1 Daily, 1.2 Weekly ฯลฯ) เพื่อดู task รายละเอียด</li>
+          <li><strong>ติ๊ก ☑ checkbox</strong> ซ้ายมือทุก task ที่ดำเนินการเสร็จแล้ว</li>
+          <li>ดู note สีน้ำเงินใต้ task — คือ limit / spec สำคัญ</li>
+          <li>Badge <span class="level-tag lv-pm" style="font-size:10px">PM</span> <span class="level-tag lv-pro" style="font-size:10px">Proactive</span> <span class="level-tag lv-pdm" style="font-size:10px">PdM</span> บอกระดับ maintenance</li>
+        </ul>
+      </div>
+      <div class="guide-card gc-teal">
+        <div class="guide-card-title">✅ Tab 2: Inspection Checklist</div>
+        <ul class="guide-card-steps">
+          <li>กรอก <strong>วันที่ / Equipment ID / ผู้ตรวจ / Running hours</strong> ก่อนทุกครั้ง</li>
+          <li>กรอกค่าพารามิเตอร์จริงจาก field: temp, vibration, current, oil temp</li>
+          <li>คลิก <strong>"ประเมินผล"</strong> — ระบบจะแสดง ✓ OK / ⚠ Warning / ✗ Alert ทันที</li>
+          <li>ถ้าพบ Alert แดง → ดำเนินการแก้ไขทันที อย่ารอ</li>
+          <li>บันทึกผลในสมุด Log หรือ Export ด้วย Ctrl+P</li>
+        </ul>
+      </div>
+      <div class="guide-card gc-amber">
+        <div class="guide-card-title">🗺 Tab 3: PM → PdM Roadmap</div>
+        <ul class="guide-card-steps">
+          <li>ดู <strong>KPI เป้าหมาย</strong>: OEE ≥ 92%, MTBF 8,000hr, MTTR &lt; 12hr</li>
+          <li>Phase 1 (เดือน 1-3): สร้าง PM ให้ครบและสม่ำเสมอก่อน</li>
+          <li>Phase 2 (เดือน 4-9): เพิ่ม Proactive — oil analysis, alignment</li>
+          <li>Phase 3 (เดือน 10-18): CBM — sensor + threshold database</li>
+          <li>Phase 4 (เดือน 19-24): PdM + AI — predict failure ก่อนเกิด</li>
+        </ul>
+      </div>
+      <div class="guide-card gc-purple">
+        <div class="guide-card-title">📊 Tab 4: Progress Tracker</div>
+        <ul class="guide-card-steps">
+          <li>คลิก <strong>"อัปเดต Progress"</strong> เพื่อนับ task ที่ติ๊กแล้วจาก Tab 1</li>
+          <li>ดู % แยกตาม PM / Proactive / PdM และ Overall</li>
+          <li>เป้าหมาย PM Compliance ≥ 95% ทุกเดือน</li>
+          <li>ถ้า PdM tasks = 0% → ยังอยู่ใน Phase 1 (ปกติ)</li>
+          <li>คลิก <strong>"วิเคราะห์ความเสี่ยง ↗"</strong> เพื่อให้ AI ช่วยจัดลำดับ priority</li>
+        </ul>
+      </div>
+    </div>
+    <div style="margin-top:12px;font-size:12px;color:#4A5A78;display:flex;gap:16px;flex-wrap:wrap;padding-top:10px;border-top:1.5px solid #C8D8EE">
+      <span>🔴 <strong>Task สีแดง</strong> = Critical — ต้องทำทันที</span>
+      <span>📌 <strong>Note สีน้ำเงิน</strong> = Standard / Limit ที่ต้องปฏิบัติตาม</span>
+      <span>🖨 <strong>Ctrl+P</strong> = Print เพื่อใช้ในสนาม</span>
+    </div>
+  </div>
+</div>
+
+<!-- TABS -->
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('wbs',this)">📋 WBS Structure</div>
+  <div class="tab" onclick="switchTab('checklist',this)">✅ Inspection Checklist</div>
+  <div class="tab" onclick="switchTab('roadmap',this)">🗺 PM → PdM Roadmap</div>
+  <div class="tab" onclick="switchTab('progress',this)">📊 Progress Tracker</div>
+</div>
+
+<!-- ══════════════════════════════════ TAB 1: WBS ══════════════════════════════════ -->
+<div id="panel-wbs" class="panel active">
+
+  <div class="info-box">
+    📌 <strong>วิธีใช้:</strong> คลิกที่ชื่อหมวด (Motor / Gearbox / Oil Cooling / Safety) เพื่อขยายดู sub-tasks → คลิก sub-header เพื่อดูรายละเอียด → <strong>ติ๊ก ☑ checkbox</strong> ซ้ายมือทุก task ที่เสร็จแล้ว → ไปดูผลที่ Tab "Progress Tracker"
+  </div>
+
+  <!-- ── WBS 1: MOTOR ── -->
+  <div class="wbs-l1 l1-motor" id="l1-motor">
+    <div class="wbs-l1-header" onclick="toggleL1('motor')">
+      <span class="wbs-badge b-blue">1</span>
+      <span class="wbs-l1-title">Motor Drive — Slip Ring 1500kW, 6.6kV</span>
+      <span class="wbs-l1-meta">28 tasks</span>
+      <span class="chevron">›</span>
+    </div>
+    <div class="wbs-body">
+
+      <div class="wbs-l2 l2-daily" id="l2-m1">
+        <div class="wbs-l2-header" onclick="toggleL2('m1')">
+          <span class="wbs-badge b-blue" style="width:22px;height:22px;font-size:11px">1.1</span>
+          <span class="wbs-l2-title">Daily / Shift Inspection</span>
+          <span class="freq-tag f-d">Daily</span>
+          <span class="chevron" style="font-size:11px">›</span>
+        </div>
+        <div class="wbs-l2-body">
+          <div class="task-row critical"><input type="checkbox" class="task-cb"><div class="task-text"><strong>ตรวจ Motor bearing temperature ทุก bearing (DE + NDE)</strong> <span class="level-tag lv-pm">PM</span><div class="task-note">🔴 Critical Limit: ≤ 80°C (Ambient+40°C) — ใช้ IR thermometer หรือ Pt100 sensor — Alert >75°C</div></div></div>
+          <div class="task-row"><input type="checkbox" class="task-cb"><div class="task-text">ตรวจเสียงผิดปกติและการสั่นสะเทือน (sense by ear/hand) <span class="level-tag lv-pm">PM</span><div class="task-note">Baseline vibration: ≤ 2.8 mm/s RMS per ISO 10816-3</div></div></div>
+          <div class="task-row"><input type="checkbox" class="task-cb"><div class="task-text">ตรวจ Slip ring & Carbon brush (visual inspection) <span class="level-tag lv-pm">PM</span><div class="task-note">สังเกต: ประกายไฟมากผิดปกติ / เสียงดัง / สีไหม้ → บันทึกถ้าพบ</div></div></div>
+          <div class="task-row critical"><input type="checkbox" class="task-cb"><div class="task-text"><strong>ตรวจ Load current ทั้ง 3 Phase (R-S-T)</strong> <span class="level-tag lv-pm">PM</span><div class="task-note">🔴 Current Unbalance &lt; 5% ของ rated current — บันทึกค่าทุก shift</div></div></div>
+          <div class="task-row"><input type="checkbox" class="task-cb"><div class="task-text">ตรวจ Ventilation / Cooling air flow <span class="level-tag lv-pm">PM</span><div class="task-note">ไม่มีฝุ่นอุด Ventilation guard หรือ screen</div></div></div>
+        </div>
+      </div>
+
+      <div class="wbs-l2 l2-weekly" id="l2-m2">
+        <div class="wbs-l2-header" onclick="toggleL2('m2')">
+          <span class="wbs-badge b-blue" style="width:22px;height:22px;font-size:11px">1.2</span>
+          <span class="wbs-l2-title">Weekly Inspection</span>
+          <span class="freq-tag f-w">Weekly</span>
+          <span class="chevron" style="font-size:11px">›</span>
+        </div>
+        <div class="wbs-l2-body">
+          <div class="task-row"><input type="checkbox" class="task-cb"><div class="task-text">วัด Vibration Overall + FFT spectrum (บันทึก trend) <span class="level-tag lv-pro">Proactive</span><div class="task-note">บันทึก baseline — Trend analysis ทุก 4 สัปดาห์ — Alert >2.8 mm/s / Trip >4.5 mm/s</div></div></div>
+          <div class="task-row"><input type="checkbox" class="task-cb"><div class="task-text">ตรวจ Carbon brush wear + contact pressure <span class="level-tag lv-pm">PM</span><div class="task-note">ความยาว brush เหลือ > 30% ของ new — contact pressure ~0.2-0.3 kg/cm²</div></div></div>
+          <div class="task-row"><input type="checkbox" class="task-cb"><div class="task-text">ทำความสะอาด Slip ring surface <span class="level-tag lv-pm">PM</span><div class="task-note">ใช้ dry lint-free cloth + isopropyl alcohol 99% — ห้ามใช้ emery cloth</div></div></div>
+          <div class="task-row"><input type="checkbox" class="task-cb"><div class="task-text">ตรวจ Grounding connection <span class="level-tag lv-pm">PM</span><div class="task-note">Resistance &lt; 1 Ω — ตรวจสภาพสาย grounding strap</div></div></div>
+        </div>
+      </div>
+
+      <div class="wbs-l2" id="l2-m3">
+        <div class="wbs-l2-header l2-monthly" onclick="toggleL2('m3')">
+          <span class="wbs-badge b-blue" style="width:22px;height:22px;font-size:11px">1.3</span>
+          <span class="wbs-l2-title">Monthly Maintenance</span>
+          <span class="freq-tag f-m">Monthly</span>
+          <span class="chevron" style="font-size:11px">›</span>
+        </div>
+        <div class="wbs-l2-body">
+          <div class="task-row critical"><input type="checkbox" class="task-cb"><div class="task-text"><strong>ตรวจ Insulation resistance — Megger test 1000V DC, 1 min</strong> <span class="level-tag lv-pm">PM</span><div class="task-note">🔴 Winding IR ≥ 100 MΩ — บันทึก PI (Polarization Index = IR10min/IR1min) ≥ 2.0</div></div></div>
+          <div class="task-row"><input type="checkbox" class="task-cb"><div class="task-text">ตรวจ Bearing greasing (motor bearing DE + NDE) <span class="level-tag lv-pm">PM</span><div class="task-note">ใช้ grease ตาม OEM spec — ระวัง over-greasing (ทำให้ bearing temp สูง)</div></div></div>
+          <div class="task-row"><input type="checkbox" class="task-cb"><div class="task-text">ตรวจ Rotor resistance symmetry ระหว่าง Phase (slip ring circuit) <span class="level-tag lv-pro">Proactive</span><div class="task-note">Resistance unbalance &lt; 2% ระหว่าง Phase R-S-T</div></div></div>
+          <div class="task-row"><input type="checkbox" class="task-cb"><div class="task-text">ทำความสะอาด Motor casing + ventilation duct <span class="level-tag lv-pm">PM</span><div class="task-note">ใช้ compressed air ≤ 4 bar — ไม่มีฝุ่นสะสม</div></div></div>
+        </div>
+      </div>
+
+      <div class="wbs-l2 l2-quarterly" id="l2-m4">
+        <div class="wbs-l2-header" onclick="toggleL2('m4')">
+          <span class="wbs-badge b-blue" style="width:22px;height:22px;font-size:11px">1.4</span>
+          <span class="wbs-l2-title">Quarterly / 3,000hr Maintenance</span>
+          <span class="freq-tag f-q">Quarterly</span>
+          <span class="chevron" style="font-size:11px">›</span>
+        </div>
+        <div class="wbs-l2-body">
+          <div class="task-row"><input type="checkbox" class="task-cb"><div class="task-text">วัด Motor vibration signature เต็มรูปแบบ (PdM point) <span class="level-tag lv-pdm">PdM</span><div class="task-note">FFT analysis — ตรวจ: Rotor bar defect, Bearing BPFO/BPFI, Misalignment, Looseness</div></div></div>
+          <div class="task-row critical"><input type="checkbox" class="task-cb"><div class="task-text"><strong>ตรวจ Shaft alignment Motor-Gearbox coupling (Laser alignment)</strong> <span class="level-tag lv-pro">Proactive</span><div class="task-note">🔴 Radial misalignment ≤ 0.05mm / Angular ≤ 0.1mm — บันทึก before & after เสมอ</div></div></div>
+          <div class="task-row"><input type="checkbox" class="task-cb"><div class="task-text">Thermal imaging — Infrared scan ครบ Drive Unit <span class="level-tag lv-pdm">PdM</span><div class="task-note">ตรวจ hot spot: winding, terminal box, bearing housing — ΔT กับ ambient &gt; 30°C ต้องตรวจสอบ</div></div></div>
+          <div class="task-row"><input type="checkbox" class="task-cb"><div class="task-text">เปลี่ยน Carbon brush ถ้า wear > 60% ของ new <span class="level-tag lv-pm">PM</span><div class="task-note">ใช้ brush grade เดิมตาม OEM — run-in ด้วยกระดาษทราย #120 ก่อน full load</div></div></div>
+        </div>
+      </div>
+
+      <div class="wbs-l2 l2-annual" id="l2-m5">
+        <div class="wbs-l2-header" onclick="toggleL2('m5')">
+          <span class="wbs-badge b-blue" style="width:22px;height:22px;font-size:11px">1.5</span>
+          <span class="wbs-l2-title">Annual / Major Overhaul</span>
+          <span class="freq-tag f-y">Annual</span>
+          <span class="chevron" style="font-size:11px">›</span>
+        </div>
+        <div class="wbs-l2-body">
+          <div class="task-row"><input type="checkbox" class="task-cb"><div class="task-text">Motor complete disassembly + full inspection <span class="level-tag lv-pm">PM</span><div class="task-note">ตรวจ: stator winding, rotor, slip ring, bearing housing, shaft seal, end shields</div></div></div>
+          <div class="task-row"><input type="checkbox" class="task-cb"><div class="task-text">Winding varnish / re-varnish treatment (ถ้า IR &lt; 500MΩ) <span class="level-tag lv-pm">PM</span><div class="task-note">Class F epoxy varnish — บันทึก tan-delta test ก่อน/หลัง</div></div></div>
+          <div class="task-row"><input type="checkbox" class="task-cb"><div class="task-text">เปลี่ยน Motor bearing ทั้งชุด DE + NDE <span class="level-tag lv-pm">PM</span><div class="task-note">ใช้ OEM part number — วัด bearing clearance ก่อน/หลัง — บันทึก installation torque</div></div></div>
+          <div class="task-row"><input type="checkbox" class="task-cb"><div class="task-text">ทดสอบ Motor no-load run + load test (2 ชม.) <span class="level-tag lv-pm">PM</span><div class="task-note">บันทึก: amps, power factor, temperature rise, vibration — No-load amps ≤ 30% rated</div></div></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── WBS 2: GEARBOX ── -->
+  <div class="wbs-l1 l1-gear" id="l1-gear">
+    <div class="wbs-l1-header" onclick="toggleL1('gear')">
+      <span class="wbs-badge b-teal">2</span>
+      <span class="wbs-l1-title">Gearbox 1500kW</span>
+      <span class="wbs-l1-meta">26 tasks</span>
+      <span class="chevron">›</span>
+    </div>
+    <div class="wbs-body">
+
+      <div class="wbs-l2 l2-daily" id="l2-g1">
+        <div class="wbs-l2-header" onclick="toggleL2('g1')">
+          <span class="wbs-badge b-teal" style="width:22px;height:22px;font-size:11px">2.1</span>
+          <span class="wbs-l2-title">Daily / Shift Check</span>
+          <span class="freq-tag f-d">Daily</span>
+          <span class="chevron" style="font-size:11px">›</span>
+        </div>
+        <div class="wbs-l2-body">
+          <div class="task-row critical"><input type="checkbox" class="task-cb"><div class="task-text"><strong>ตรวจ Oil level ใน Sight glass / Dipstick</strong> <span class="level-tag lv-pm">PM</span><div class="task-note">🔴 ระดับน้ำมันอยู่ใน min-max range เสมอ — บันทึกทันทีถ้า level ลดผิดปกติ (อาจ leak)</div></div></div>
+          <div class="task-row critical"><input type="checkbox" class="task-cb"><div class="task-text"><strong>ตรวจ Oil temperature ที่ gearbox sump</strong> <span class="level-tag lv-pm">PM</span><div class="task-note">🔴 ปกติ 60-80°C — Alert &gt; 90°C / Trip &gt; 105°C — บันทึกทุก shift</div></div></div>
+          <div class="task-row"><input type="checkbox" class="task-cb"><div class="task-text">ตรวจ Oil leak รอบ seals, gaskets, flange, sight glass <span class="level-tag lv-pm">PM</span><div class="task-note">ระบุตำแหน่งและปริมาณการรั่ว — minor leak ต้องบันทึกและ monitor</div></div></div>
+          <div class="task-row"><input type="checkbox" class="task-cb"><div class="task-text">ตรวจ Gearbox noise / vibration (by stethoscope) <span class="level-tag lv-pm">PM</span><div class="task-note">ผิดปกติ: knocking, grinding, whining — บันทึกและรายงานทันที</div></div></div>
+        </div>
+      </div>
+
+      <div class="wbs-l2" id="l2-g2">
+        <div class="wbs-l2-header l2-monthly" onclick="toggleL2('g2')">
+          <span class="wbs-badge b-teal" style="width:22px;height:22px;font-size:11px">2.2</span>
+          <span class="wbs-l2-title">Monthly Maintenance</span>
+          <span class="freq-tag f-m">Monthly</span>
+          <span class="chevron" style="font-size:11px">›</span>
+        </div>
+        <div class="wbs-l2-body">
+          <div class="task-row"><input type="checkbox" class="task-cb"><div class="task-text">ทำความสะอาด Oil filter — ตรวจ Differential pressure gauge <span class="level-tag lv-pm">PM</span><div class="task-note">เปลี่ยน filter ถ้า ΔP &gt; 1.5 bar หรือทุก 3 เดือน</div></div></div>
+          <div class="task-row"><input type="checkbox" class="task-cb"><div class="task-text">ทำความสะอาด Air breather / Air filter <span class="level-tag lv-pm">PM</span><div class="task-note">Air breather ไม่อุดตัน — Silica gel ยังใช้ได้ (สีไม่เปลี่ยน)</div></div></div>
+          <div class="task-row"><input type="checkbox" class="task-cb"><div class="task-text">ตรวจ Taconite seals + Tacolab seals + เติม grease <span class="level-tag lv-pm">PM</span><div class="task-note">Regrease ทุก 3,000hr หรือ 6 เดือน — ใช้ grease ตาม OEM spec เท่านั้น</div></div></div>
+          <div class="task-row"><input type="checkbox" class="task-cb"><div class="task-text">วัด Gearbox vibration (FFT spectrum analysis) <span class="level-tag lv-pdm">PdM</span><div class="task-note">วิเคราะห์ Gear Mesh Frequency (GMF) + Sidebands — Alert: sideband เพิ่ม &gt; 50% จาก baseline</div></div></div>
+        </div>
+      </div>
+
+      <div class="wbs-l2 l2-quarterly" id="l2-g3">
+        <div class="wbs-l2-header" onclick="toggleL2('g3')">
+          <span class="wbs-badge b-teal" style="width:22px;height:22px;font-size:11px">2.3</span>
+          <span class="wbs-l2-title">Oil Analysis Program (Proactive)</span>
+          <span class="freq-tag f-q">Quarterly</span>
+          <span class="chevron" style="font-size:11px">›</span>
+        </div>
+        <div class="wbs-l2-body">
+          <div class="task-row critical"><input type="checkbox" class="task-cb"><div class="task-text"><strong>เก็บ Oil sample (100ml) ส่ง Laboratory วิเคราะห์</strong> <span class="level-tag lv-pro">Proactive</span><div class="task-note">🔴 ตรวจ: Viscosity, Water content, Fe/Cu/Al ppm, Oxidation (TAN), Nitration — บันทึก operating hours</div></div></div>
+          <div class="task-row"><input type="checkbox" class="task-cb"><div class="task-text">ตรวจ Water content ในน้ำมัน (Karl Fischer หรือ Crackle test) <span class="level-tag lv-pm">PM</span><div class="task-note">Water content &lt; 0.05% — Alert &gt; 0.1% (น้ำเข้า Gearbox)</div></div></div>
+          <div class="task-row"><input type="checkbox" class="task-cb"><div class="task-text">ตรวจ Magnetic drain plug + particle count <span class="level-tag lv-pro">Proactive</span><div class="task-note">Alert: Iron &gt; 100 ppm หรือ particle ขนาด &gt; 150 micron — ส่ง Lab analysis ทันที</div></div></div>
+        </div>
+      </div>
+
+      <div class="wbs-l2 l2-annual" id="l2-g4">
+        <div class="wbs-l2-header" onclick="toggleL2('g4')">
+          <span class="wbs-badge b-teal" style="width:22px;height:22px;font-size:11px">2.4</span>
+          <span class="wbs-l2-title">Annual / 10,000hr — Oil Change + Inspection</span>
+          <span class="freq-tag f-y">Annual</span>
+          <span class="chevron" style="font-size:11px">›</span>
+        </div>
+        <div class="wbs-l2-body">
+          <div class="task-row"><input type="checkbox" class="task-cb"><div class="task-text">เปลี่ยน Gearbox oil ทั้งหมด (Drain → Flush → Fill) <span class="level-tag lv-pm">PM</span><div class="task-note">Mineral oil API Group I/II — flush ด้วย flushing oil ก่อนเติมใหม่ — เปลี่ยนทุก 10,000hr หรือ 2 ปี</div></div></div>
+          <div class="task-row"><input type="checkbox" class="task-cb"><div class="task-text">เปลี่ยน Oil filter ทั้งชุด + Air filter ใหม่ <span class="level-tag lv-pm">PM</span><div class="task-note">ใช้ OEM filter part number — บันทึก ΔP ก่อนเปลี่ยน</div></div></div>
+          <div class="task-row critical"><input type="checkbox" class="task-cb"><div class="task-text"><strong>ตรวจสภาพ Gear tooth ด้วย Borescope camera</strong> <span class="level-tag lv-pro">Proactive</span><div class="task-note">🔴 ตรวจ: Pitting, Spalling, Micropitting, Scuffing, Wear pattern — ถ่าย photo เก็บเพื่อ compare ปีต่อปี</div></div></div>
+          <div class="task-row"><input type="checkbox" class="task-cb"><div class="task-text">ตรวจ Friction lining ของ Torque-limiting backstop <span class="level-tag lv-pm">PM</span><div class="task-note">Lining thickness เหลือ &gt; 50% ของ new — เปลี่ยนถ้าน้อยกว่า</div></div></div>
+          <div class="task-row"><input type="checkbox" class="task-cb"><div class="task-text">ตรวจ Hose lines, Shrink disk, Coupling element <span class="level-tag lv-pm">PM</span><div class="task-note">Hose อายุ &gt; 6 ปี ให้เปลี่ยนแม้ไม่มีอาการ (per OEM)</div></div></div>
+          <div class="task-row"><input type="checkbox" class="task-cb"><div class="task-text">ตรวจและขันน็อต Fastening bolts ทั้งหมด (torque wrench) <span class="level-tag lv-pm">PM</span><div class="task-note">ใช้ calibrated torque wrench ตาม OEM torque spec — บันทึกค่าทุกจุด</div></div></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── WBS 3: OIL COOLING ── -->
+  <div class="wbs-l1 l1-oil" id="l1-oil">
+    <div class="wbs-l1-header" onclick="toggleL1('oil')">
+      <span class="wbs-badge b-amber">3</span>
+      <span class="wbs-l1-title">Oil Cooling System</span>
+      <span class="wbs-l1-meta">18 tasks</span>
+      <span class="chevron">›</span>
+    </div>
+    <div class="wbs-body">
+      <div class="wbs-l2 l2-daily" id="l2-c1">
+        <div class="wbs-l2-header" onclick="toggleL2('c1')">
+          <span class="wbs-badge b-amber" style="width:22px;height:22px;font-size:11px">3.1</span>
+          <span class="wbs-l2-title">Daily Check</span>
+          <span class="freq-tag f-d">Daily</span>
+          <span class="chevron" style="font-size:11px">›</span>
+        </div>
+        <div class="wbs-l2-body">
+          <div class="task-row"><input type="checkbox" class="task-cb"><div class="task-text">ตรวจ Oil pump operation — pressure + flow rate <span class="level-tag lv-pm">PM</span><div class="task-note">Flow rate ตาม design spec — pressure ปกติ (ไม่ต่ำหรือสูงเกิน)</div></div></div>
+          <div class="task-row critical"><input type="checkbox" class="task-cb"><div class="task-text"><strong>ตรวจ Oil cooler inlet/outlet temperature (ΔT)</strong> <span class="level-tag lv-pm">PM</span><div class="task-note">🔴 ΔT cooler ≥ 10°C = cooler ทำงานปกติ — ΔT &lt; 5°C = cooler อาจอุดตัน ต้องทำความสะอาดทันที</div></div></div>
+          <div class="task-row"><input type="checkbox" class="task-cb"><div class="task-text">ตรวจ Coolant/water leak รอบ cooler, piping, fittings <span class="level-tag lv-pm">PM</span><div class="task-note">ไม่มี external coolant leak — ไม่มี oil ใน coolant circuit</div></div></div>
+        </div>
+      </div>
+      <div class="wbs-l2" id="l2-c2">
+        <div class="wbs-l2-header l2-monthly" onclick="toggleL2('c2')">
+          <span class="wbs-badge b-amber" style="width:22px;height:22px;font-size:11px">3.2</span>
+          <span class="wbs-l2-title">Monthly / Quarterly Maintenance</span>
+          <span class="freq-tag f-m">Monthly</span>
+          <span class="chevron" style="font-size:11px">›</span>
+        </div>
+        <div class="wbs-l2-body">
+          <div class="task-row"><input type="checkbox" class="task-cb"><div class="task-text">ทำความสะอาด Air-oil cooler fins <span class="level-tag lv-pm">PM</span><div class="task-note">ใช้ compressed air ≤ 4 bar — water wash ถ้ามีฝุ่นมาก (Mae Moh สภาพแวดล้อมฝุ่นสูง)</div></div></div>
+          <div class="task-row"><input type="checkbox" class="task-cb"><div class="task-text">ตรวจ Cooling fan belt tension + fan blade + motor bearing <span class="level-tag lv-pm">PM</span><div class="task-note">Belt deflection ตาม spec — ไม่มีรอยแตก blade</div></div></div>
+          <div class="task-row critical"><input type="checkbox" class="task-cb"><div class="task-text"><strong>ตรวจ Oil pump bearing vibration (FFT)</strong> <span class="level-tag lv-pdm">PdM</span><div class="task-note">🔴 Critical: Field data พบ bearing defect Stage 3 ที่ Oil Pump Motor (CR-I, CR-K, CR-L) — ถ้า Stage 3+ เปลี่ยนทันที</div></div></div>
+          <div class="task-row"><input type="checkbox" class="task-cb"><div class="task-text">ตรวจ Water-oil cooler leakage test (pressure test) <span class="level-tag lv-pm">PM</span><div class="task-note">เปลี่ยนพร้อมกับเปลี่ยน oil ทุก 2 ปี</div></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── WBS 4: SAFETY ── -->
+  <div class="wbs-l1 l1-safe" id="l1-safe">
+    <div class="wbs-l1-header" onclick="toggleL1('safe')">
+      <span class="wbs-badge b-purple">4</span>
+      <span class="wbs-l1-title">Safety, Coupling &amp; Structural</span>
+      <span class="wbs-l1-meta">12 tasks</span>
+      <span class="chevron">›</span>
+    </div>
+    <div class="wbs-body">
+      <div class="wbs-l2 l2-quarterly" id="l2-s1">
+        <div class="wbs-l2-header" onclick="toggleL2('s1')">
+          <span class="wbs-badge b-purple" style="width:22px;height:22px;font-size:11px">4.1</span>
+          <span class="wbs-l2-title">Coupling &amp; Alignment</span>
+          <span class="freq-tag f-q">Quarterly</span>
+          <span class="chevron" style="font-size:11px">›</span>
+        </div>
+        <div class="wbs-l2-body">
+          <div class="task-row critical"><input type="checkbox" class="task-cb"><div class="task-text"><strong>Laser Alignment — Motor to Gearbox (บันทึก before &amp; after)</strong> <span class="level-tag lv-pro">Proactive</span><div class="task-note">🔴 Radial ≤ 0.05mm / Angular ≤ 0.1mm / Soft foot ≤ 0.05mm per bolt</div></div></div>
+          <div class="task-row"><input type="checkbox" class="task-cb"><div class="task-text">ตรวจ Coupling element / flexible insert — wear, crack <span class="level-tag lv-pm">PM</span><div class="task-note">เปลี่ยนถ้า deform &gt; 5% หรือมีรอยแตก visible</div></div></div>
+          <div class="task-row"><input type="checkbox" class="task-cb"><div class="task-text">ตรวจ Soft-foot ของ Motor baseplate (per bolt) <span class="level-tag lv-pro">Proactive</span><div class="task-note">Soft foot &lt; 0.05mm per bolt — ถ้า &gt; 0.1mm ต้องแก้ก่อน alignment เสมอ</div></div></div>
+        </div>
+      </div>
+      <div class="wbs-l2" id="l2-s2">
+        <div class="wbs-l2-header l2-monthly" onclick="toggleL2('s2')">
+          <span class="wbs-badge b-purple" style="width:22px;height:22px;font-size:11px">4.2</span>
+          <span class="wbs-l2-title">Safety System Check</span>
+          <span class="freq-tag f-m">Monthly</span>
+          <span class="chevron" style="font-size:11px">›</span>
+        </div>
+        <div class="wbs-l2-body">
+          <div class="task-row critical"><input type="checkbox" class="task-cb"><div class="task-text"><strong>ทดสอบ LOTO Procedure — ครบทุกขั้นตอนก่อน maintenance ทุกครั้ง</strong> <span class="level-tag lv-pm">PM</span><div class="task-note">🔴 Safety First — ทุก technician ต้อง sign-off — ไม่มีพลังงาน residual ก่อนเข้า work area</div></div></div>
+          <div class="task-row"><input type="checkbox" class="task-cb"><div class="task-text">ตรวจ Emergency stop + Protection relay (Over-temp, OL, GF) <span class="level-tag lv-pm">PM</span><div class="task-note">E-stop ตอบสนองภายใน 200ms — Protection relay set point ตาม design</div></div></div>
+          <div class="task-row"><input type="checkbox" class="task-cb"><div class="task-text">ตรวจ Over-temperature protection sensors — calibration check <span class="level-tag lv-pm">PM</span><div class="task-note">Calibrate Pt100 / Thermistor ±2°C — เปลี่ยนถ้า drift &gt; 5°C</div></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="legend-bar">
+    <strong>Legend:</strong>
+    <span><span class="level-tag lv-pm">PM</span> Preventive Maintenance</span>
+    <span><span class="level-tag lv-pro">Proactive</span> Proactive Maintenance</span>
+    <span><span class="level-tag lv-pdm">PdM</span> Predictive Maintenance</span>
+    <span>🔴 <strong>พื้นแดง</strong> = Critical Task — ต้องทำก่อน / ห้าม skip</span>
+  </div>
+
+</div><!-- /wbs -->
+
+<!-- ══════════════════════════════════ TAB 2: CHECKLIST ══════════════════════════════════ -->
+<div id="panel-checklist" class="panel">
+
+  <div class="info-box">
+    📋 <strong>วิธีบันทึก Checklist:</strong>
+    กรอกข้อมูลในช่อง (1) ข้อมูลการตรวจ → (2) กรอกค่า parameter จากการวัดจริงในสนาม → (3) คลิก <strong>"ประเมินผล"</strong> เพื่อดูผล → (4) ถ่ายภาพหน้าจอหรือ Ctrl+P เพื่อ print เก็บเป็น record
+  </div>
+
+  <!-- ── Section: General Info ── -->
+  <div class="form-section">
+    <div class="form-section-title">📌 ข้อมูลการตรวจสอบ</div>
+    <div class="form-grid">
+      <div class="param-row"><span class="param-label">📅 วันที่ตรวจ</span><input type="date" class="param-input" id="insp-date" style="width:150px"></div>
+      <div class="param-row"><span class="param-label">🏷 Equipment ID</span><input type="text" class="param-input" id="eq-id" placeholder="เช่น CV-01-DU" style="width:150px"></div>
+      <div class="param-row"><span class="param-label">👷 ผู้ตรวจสอบ</span><input type="text" class="param-input" id="insp-by" placeholder="ชื่อ-สกุล" style="width:150px"></div>
+      <div class="param-row"><span class="param-label">⏱ Running hours</span><input type="number" class="param-input" id="run-hr" placeholder="hrs" style="width:150px"><span class="param-unit">hr</span></div>
+    </div>
+  </div>
+
+  <!-- ── Section: Motor ── -->
+  <div class="form-section motor">
+    <div class="form-section-title">⚡ Motor Drive 1500kW — พารามิเตอร์ที่ต้องวัด</div>
+    <div class="info-box" style="margin-bottom:10px;font-size:11px">💡 กรอกค่าจริงที่วัดได้ — ระบบจะประเมินว่าอยู่ในเกณฑ์หรือเกินค่า limit ทันที</div>
+    <div class="param-row"><span class="param-label">🌡 Motor temp — DE bearing</span><input type="number" class="param-input" id="p-m-de" placeholder="°C"><span class="param-unit warn">°C (&lt;80)</span></div>
+    <div class="param-row"><span class="param-label">🌡 Motor temp — NDE bearing</span><input type="number" class="param-input" id="p-m-nde" placeholder="°C"><span class="param-unit warn">°C (&lt;80)</span></div>
+    <div class="param-row"><span class="param-label">📳 Motor vibration (RMS)</span><input type="number" class="param-input" id="p-m-vib" placeholder="mm/s"><span class="param-unit warn">mm/s (&lt;2.8)</span></div>
+    <div class="param-row"><span class="param-label">⚡ Current Phase R</span><input type="number" class="param-input" id="p-ir" placeholder="A"><span class="param-unit">A</span></div>
+    <div class="param-row"><span class="param-label">⚡ Current Phase S</span><input type="number" class="param-input" id="p-is" placeholder="A"><span class="param-unit">A</span></div>
+    <div class="param-row"><span class="param-label">⚡ Current Phase T</span><input type="number" class="param-input" id="p-it" placeholder="A"><span class="param-unit">A</span></div>
+    <div class="param-row"><span class="param-label">🔋 Insulation resistance (Megger)</span><input type="number" class="param-input" id="p-ir-val" placeholder="MΩ"><span class="param-unit warn">MΩ (&gt;100)</span></div>
+  </div>
+
+  <!-- ── Section: Gearbox ── -->
+  <div class="form-section gear">
+    <div class="form-section-title">⚙️ Gearbox — พารามิเตอร์ที่ต้องวัด</div>
+    <div class="param-row"><span class="param-label">🌡 Gearbox oil temperature</span><input type="number" class="param-input" id="p-g-otemp" placeholder="°C"><span class="param-unit warn">°C (&lt;90)</span></div>
+    <div class="param-row"><span class="param-label">📳 Gearbox vibration (RMS)</span><input type="number" class="param-input" id="p-g-vib" placeholder="mm/s"><span class="param-unit">mm/s</span></div>
+    <div class="param-row"><span class="param-label">🛢 Oil level (sight glass)</span>
+      <select class="param-input" id="p-g-oil" style="width:150px">
+        <option value="">— เลือก —</option>
+        <option value="ok">✓ ปกติ (in range)</option>
+        <option value="low">⚠ ต่ำกว่า min</option>
+        <option value="high">ⓘ สูงกว่า max</option>
+      </select>
+    </div>
+    <div class="param-row"><span class="param-label">💧 Oil leak</span>
+      <select class="param-input" id="p-g-leak" style="width:150px">
+        <option value="no">✓ ไม่มี leak</option>
+        <option value="minor">⚠ รั่วเล็กน้อย</option>
+        <option value="major">✗ รั่วมาก</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- ── Section: Oil Cooling ── -->
+  <div class="form-section oil">
+    <div class="form-section-title">💧 Oil Cooling System — พารามิเตอร์ที่ต้องวัด</div>
+    <div class="param-row"><span class="param-label">🌡 Cooler inlet temperature</span><input type="number" class="param-input" id="p-c-in" placeholder="°C"><span class="param-unit">°C</span></div>
+    <div class="param-row"><span class="param-label">🌡 Cooler outlet temperature</span><input type="number" class="param-input" id="p-c-out" placeholder="°C"><span class="param-unit">°C</span></div>
+    <div class="param-row"><span class="param-label">🔧 Pump pressure</span><input type="number" class="param-input" id="p-c-pres" placeholder="bar"><span class="param-unit">bar</span></div>
+  </div>
+
+  <div class="form-actions">
+    <button class="btn-eval" onclick="evaluateChecklist()">🔍 ประเมินผล</button>
+    <button class="btn-send" onclick="sendPrompt('ช่วยแนะนำขั้นตอนแก้ไขถ้าค่า motor vibration เกิน 2.8 mm/s และ oil temperature สูงกว่า 90°C')">💬 ขอคำแนะนำแก้ไข ↗</button>
+  </div>
+  <div class="result-box" id="eval-result">
+    <div class="result-box-header">📊 ผลการประเมิน</div>
+  </div>
+
+  <!-- ── Record Log Table ── -->
+  <div class="sec-title" style="margin-top:20px">📒 ตัวอย่างการบันทึก Log (Equipment History)</div>
+  <div class="info-box teal" style="margin-bottom:8px">
+    📌 <strong>วิธีบันทึก Log:</strong> หลังตรวจสอบทุกครั้ง ให้บันทึกค่าพารามิเตอร์ในตารางนี้ เพื่อสร้าง Equipment History ใช้ใน Trend Analysis และ PdM ในระยะถัดไป
+  </div>
+  <table class="rec-table">
+    <thead><tr><th>วันที่</th><th>Equipment ID</th><th>Motor DE Temp</th><th>Vibration</th><th>GB Oil Temp</th><th>Cooler ΔT</th><th>สถานะ</th><th>หมายเหตุ</th></tr></thead>
+    <tbody>
+      <tr><td>ตัวอย่าง</td><td>CV-01-DU</td><td>65°C</td><td>1.8 mm/s</td><td>72°C</td><td>14°C</td><td style="color:#065030;font-weight:700">✓ Normal</td><td>ปกติ</td></tr>
+      <tr><td colspan="8" style="text-align:center;color:#8898B8;font-style:italic;padding:12px">— บันทึกค่าจริงในแต่ละรอบการตรวจ —</td></tr>
+    </tbody>
+  </table>
+
+</div><!-- /checklist -->
+
+<!-- ══════════════════════════════════ TAB 3: ROADMAP ══════════════════════════════════ -->
+<div id="panel-roadmap" class="panel">
+
+  <div class="info-box">
+    🗺 <strong>วิธีใช้ Roadmap:</strong> ดูว่าองค์กรอยู่ใน <strong>Phase ใด</strong> ปัจจุบัน → ทำ task ใน Phase นั้นให้ครบ → ค่อยก้าวไป Phase ถัดไป — ห้ามข้าม Phase (ต้องมีฐาน PM ที่แข็งแกร่งก่อนทำ PdM)
+  </div>
+
+  <div class="kpi-grid">
+    <div class="kpi-card"><div class="kpi-title">🎯 เป้าหมาย OEE</div><div class="kpi-val">≥ 92%</div><div class="kpi-target">จาก ~82% ปัจจุบัน (+10%)</div></div>
+    <div class="kpi-card"><div class="kpi-title">⏱ MTBF Target</div><div class="kpi-val">8,000 hr</div><div class="kpi-target">จาก ~4,500 hr (เพิ่ม 78%)</div></div>
+    <div class="kpi-card"><div class="kpi-title">🔧 MTTR Target</div><div class="kpi-val">&lt; 12 hr</div><div class="kpi-target">จาก ~24 hr (ลด 50%)</div></div>
+  </div>
+
+  <div class="road-phase rp-blue">
+    <div class="road-phase-num b-blue" style="border-color:#3A7BD5">1</div>
+    <div class="road-phase-content">
+      <div class="road-phase-title">Phase 1 — Preventive Maintenance ที่สมบูรณ์</div>
+      <span class="road-phase-period">⏰ ระยะเวลา: เดือนที่ 1–3</span>
+      <div class="road-items">
+        <div class="road-item">จัดทำ Maintenance schedule ครบ: Daily / Weekly / Monthly / Annual</div>
+        <div class="road-item">สร้าง Checklist form + <strong>บันทึกผลทุกครั้ง</strong> (ดิจิตอลหรือกระดาษ)</div>
+        <div class="road-item">กำหนด spare parts list + min stock level ของทุก component</div>
+        <div class="road-item">อบรมทีม technician — LOTO procedure + Safety standard</div>
+        <div class="road-item">สร้าง Equipment History Card แต่ละเครื่อง (39 units)</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="road-phase rp-teal">
+    <div class="road-phase-num b-teal" style="border-color:#1A8A55">2</div>
+    <div class="road-phase-content">
+      <div class="road-phase-title">Phase 2 — Proactive Maintenance</div>
+      <span class="road-phase-period">⏰ ระยะเวลา: เดือนที่ 4–9</span>
+      <div class="road-items">
+        <div class="road-item">เริ่ม <strong>Oil analysis program</strong> — Lab testing ทุก 3 เดือน</div>
+        <div class="road-item">ทำ <strong>Laser alignment</strong> ทุก 3 เดือน + บันทึก trend</div>
+        <div class="road-item">Borescope inspection gear tooth ปีละ 1 ครั้ง</div>
+        <div class="road-item">กำหนด <strong>FMEA</strong> — failure mode ของแต่ละ component</div>
+        <div class="road-item">ติดตั้ง permanent vibration sensor ที่ key bearing (online monitoring)</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="road-phase rp-amber">
+    <div class="road-phase-num b-amber" style="border-color:#C87820">3</div>
+    <div class="road-phase-content">
+      <div class="road-phase-title">Phase 3 — Condition-Based Maintenance (CBM)</div>
+      <span class="road-phase-period">⏰ ระยะเวลา: เดือนที่ 10–18</span>
+      <div class="road-items">
+        <div class="road-item">ติดตั้ง vibration monitoring system ครบ: Motor, Gearbox, Oil Pump bearing</div>
+        <div class="road-item">IR thermal camera scan quarterly — ครบทุก Drive Unit</div>
+        <div class="road-item">สร้าง <strong>baseline database</strong> จาก 6 เดือนของ measurement data</div>
+        <div class="road-item">กำหนด Alert / Warning / Trip threshold จาก real operating data</div>
+        <div class="road-item">เปลี่ยนจาก time-based → condition-based (bearing, carbon brush)</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="road-phase rp-purple">
+    <div class="road-phase-num b-purple" style="border-color:#5A38C0">4</div>
+    <div class="road-phase-content">
+      <div class="road-phase-title">Phase 4 — Predictive Maintenance (PdM) Full Deployment</div>
+      <span class="road-phase-period">⏰ ระยะเวลา: เดือนที่ 19–24</span>
+      <div class="road-items">
+        <div class="road-item"><strong>FFT spectrum analysis</strong> — detect gear/bearing defect ก่อน failure</div>
+        <div class="road-item">Motor Current Signature Analysis (MCSA) — ตรวจ rotor bar, stator fault</div>
+        <div class="road-item">Oil particle counting online — ตรวจ metal wear ต่อเนื่อง</div>
+        <div class="road-item">Trend analysis + Machine Learning (ถ้ามีข้อมูลเพียงพอ ≥ 12 เดือน)</div>
+        <div class="road-item">Integration กับ CMMS — auto work order generation จาก condition score</div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /roadmap -->
+
+<!-- ══════════════════════════════════ TAB 4: PROGRESS ══════════════════════════════════ -->
+<div id="panel-progress" class="panel">
+
+  <div class="info-box purple" style="background:#F2EFFE;border-color:#C0B4E8;color:#2C1888">
+    📊 <strong>วิธีใช้ Progress Tracker:</strong>
+    (1) ไปที่ Tab "WBS Structure" → ติ๊ก ☑ task ที่ดำเนินการเสร็จแล้ว →
+    (2) กลับมา Tab นี้ → คลิก <strong>"อัปเดต Progress"</strong> → ดูเปอร์เซ็นต์ความคืบหน้า
+    <br><strong>เป้าหมาย:</strong> PM Compliance ≥ 95% ทุกเดือน | Proactive ≥ 80% | PdM ตาม Phase ที่อยู่
+  </div>
+
+  <div class="progress-wrap">
+    <div class="stat-card">
+      <div class="stat-label">PM Compliance</div>
+      <div class="stat-val" id="pm-pct">0%</div>
+      <div class="prog-bar"><div class="prog-fill pf-blue" id="pm-bar" style="width:0%"></div></div>
+      <div class="stat-sub" id="pm-sub">0 / 0 tasks completed</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Proactive Tasks</div>
+      <div class="stat-val" id="pro-pct">0%</div>
+      <div class="prog-bar"><div class="prog-fill pf-teal" id="pro-bar" style="width:0%"></div></div>
+      <div class="stat-sub" id="pro-sub">0 / 0 tasks</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">PdM Tasks</div>
+      <div class="stat-val" id="pdm-pct">0%</div>
+      <div class="prog-bar"><div class="prog-fill pf-amber" id="pdm-bar" style="width:0%"></div></div>
+      <div class="stat-sub" id="pdm-sub">0 / 0 tasks</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Overall Progress</div>
+      <div class="stat-val" id="all-pct">0%</div>
+      <div class="prog-bar"><div class="prog-fill pf-purple" id="all-bar" style="width:0%"></div></div>
+      <div class="stat-sub" id="all-sub">0 / 0 total tasks</div>
+    </div>
+  </div>
+
+  <div style="display:flex;gap:10px;flex-wrap:wrap">
+    <button class="btn-eval" onclick="updateProgress()">🔄 อัปเดต Progress จาก WBS</button>
+    <button class="btn-send" onclick="sendPrompt('จาก progress ของ maintenance tasks ช่วยแนะนำ priority ของ tasks ที่ควรทำก่อน และ risk ถ้า overdue')">📊 วิเคราะห์ความเสี่ยง ↗</button>
+  </div>
+
+  <div class="sec-title" style="margin-top:18px">📈 ตัวชี้วัดเป้าหมาย (KPI Targets)</div>
+  <table class="rec-table">
+    <thead><tr><th>KPI</th><th>ค่าปัจจุบัน (เป้าหมาย)</th><th>Phase ที่ต้องทำให้สำเร็จ</th><th>วิธีวัด</th></tr></thead>
+    <tbody>
+      <tr><td><strong>PM Compliance</strong></td><td>≥ 95% ต่อเดือน</td><td>Phase 1 (เดือน 1-3)</td><td>Tasks done / Tasks scheduled × 100</td></tr>
+      <tr><td><strong>MTBF (Mean Time Between Failure)</strong></td><td>เป้า 8,000 hr</td><td>Phase 2-3</td><td>Total run hours / Number of failures</td></tr>
+      <tr><td><strong>MTTR (Mean Time To Repair)</strong></td><td>เป้า &lt; 12 hr</td><td>Phase 2</td><td>Total repair time / Number of repairs</td></tr>
+      <tr><td><strong>OEE (Overall Equipment Effectiveness)</strong></td><td>เป้า ≥ 92%</td><td>Phase 3-4</td><td>Availability × Performance × Quality</td></tr>
+      <tr><td><strong>Oil Analysis Compliance</strong></td><td>ทุก 3 เดือน ครบ</td><td>Phase 2</td><td>Samples sent / Samples scheduled</td></tr>
+    </tbody>
+  </table>
+
+</div><!-- /progress -->
+
+</div><!-- /wrap -->
+
+<script>
+/* ── Guide toggle ── */
+function toggleGuide(){
+  const body=document.getElementById('guide-body');
+  const hdr=document.getElementById('guide-toggle');
+  body.classList.toggle('show');
+  hdr.classList.toggle('open');
+}
+document.getElementById('guide-toggle').classList.add('open');
+
+/* ── Tab switch ── */
+function switchTab(name,el){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('panel-'+name).classList.add('active');
+  el.classList.add('active');
+  if(name==='progress') updateProgress();
+}
+
+/* ── WBS toggles ── */
+function toggleL1(id){
+  const el=document.getElementById('l1-'+id);
+  el.classList.toggle('open');
+}
+function toggleL2(id){
+  const el=document.getElementById('l2-'+id);
+  el.classList.toggle('open');
+}
+
+/* ── Checklist evaluation ── */
+function evaluateChecklist(){
+  const alerts=[];
+  const mde=parseFloat(document.getElementById('p-m-de').value);
+  const mnde=parseFloat(document.getElementById('p-m-nde').value);
+  const mvib=parseFloat(document.getElementById('p-m-vib').value);
+  const ir=parseFloat(document.getElementById('p-ir').value);
+  const is_=parseFloat(document.getElementById('p-is').value);
+  const it=parseFloat(document.getElementById('p-it').value);
+  const irVal=parseFloat(document.getElementById('p-ir-val').value);
+  const gotemp=parseFloat(document.getElementById('p-g-otemp').value);
+  const goil=document.getElementById('p-g-oil').value;
+  const gleak=document.getElementById('p-g-leak').value;
+  const cin=parseFloat(document.getElementById('p-c-in').value);
+  const cout=parseFloat(document.getElementById('p-c-out').value);
+
+  if(!isNaN(mde)&&mde>80)       alerts.push({t:'err',m:'Motor DE bearing temp สูงเกิน 80°C (ค่า: '+mde+'°C) — ตรวจ grease + cooling ทันที'});
+  else if(!isNaN(mde)&&mde>70)  alerts.push({t:'warn',m:'Motor DE bearing temp ใกล้ limit ('+mde+'°C) — เฝ้าระวัง'});
+  else if(!isNaN(mde))           alerts.push({t:'ok',m:'Motor DE bearing temp ปกติ ('+mde+'°C)'});
+
+  if(!isNaN(mnde)&&mnde>80)     alerts.push({t:'err',m:'Motor NDE bearing temp สูงเกิน 80°C (ค่า: '+mnde+'°C) — ตรวจสอบทันที'});
+  else if(!isNaN(mnde)&&mnde>70)alerts.push({t:'warn',m:'Motor NDE bearing temp ใกล้ limit ('+mnde+'°C)'});
+  else if(!isNaN(mnde))          alerts.push({t:'ok',m:'Motor NDE bearing temp ปกติ ('+mnde+'°C)'});
+
+  if(!isNaN(mvib)&&mvib>4.5)    alerts.push({t:'err',m:'Motor vibration สูงมาก '+mvib+' mm/s — หยุดเครื่องตรวจสอบทันที (ห้ามเดินต่อ)'});
+  else if(!isNaN(mvib)&&mvib>2.8)alerts.push({t:'warn',m:'Motor vibration เกิน baseline limit '+mvib+' mm/s — นัด vibration analysis ภายใน 1 สัปดาห์'});
+  else if(!isNaN(mvib))          alerts.push({t:'ok',m:'Motor vibration ปกติ ('+mvib+' mm/s)'});
+
+  if(!isNaN(ir)&&!isNaN(is_)&&!isNaN(it)){
+    const avg=(ir+is_+it)/3;
+    const maxD=Math.max(Math.abs(ir-avg),Math.abs(is_-avg),Math.abs(it-avg));
+    const unbal=avg>0?Math.round((maxD/avg)*100):0;
+    if(unbal>5) alerts.push({t:'warn',m:'Current unbalance '+unbal+'% (>5%) — ตรวจ supply voltage + winding'});
+    else if(avg>0) alerts.push({t:'ok',m:'Current balance ปกติ (unbalance '+unbal+'%)'});
+  }
+
+  if(!isNaN(irVal)&&irVal<50)    alerts.push({t:'err',m:'Insulation resistance ต่ำมาก '+irVal+' MΩ — ห้าม start motor จนกว่าจะแก้ไข'});
+  else if(!isNaN(irVal)&&irVal<100) alerts.push({t:'warn',m:'Insulation resistance ต่ำ '+irVal+' MΩ (<100MΩ) — ตรวจ moisture + winding'});
+  else if(!isNaN(irVal))         alerts.push({t:'ok',m:'Insulation resistance ปกติ '+irVal+' MΩ'});
+
+  if(!isNaN(gotemp)&&gotemp>90) alerts.push({t:'err',m:'Gearbox oil temp สูง '+gotemp+'°C — ตรวจ cooler + oil level + load ทันที'});
+  else if(!isNaN(gotemp)&&gotemp>80)alerts.push({t:'warn',m:'Gearbox oil temp สูงกว่าปกติ '+gotemp+'°C — เฝ้าระวัง trend'});
+  else if(!isNaN(gotemp))        alerts.push({t:'ok',m:'Gearbox oil temp ปกติ ('+gotemp+'°C)'});
+
+  if(goil==='low')    alerts.push({t:'err',m:'Gearbox oil level ต่ำกว่า min — เติมน้ำมันทันที + ตรวจ leak point'});
+  if(gleak==='major') alerts.push({t:'err',m:'Oil leak รุนแรง — หยุดเครื่อง + ซ่อม seal/gasket ทันที'});
+  else if(gleak==='minor') alerts.push({t:'warn',m:'Oil leak เล็กน้อย — นัดซ่อมภายใน 48 ชม. + ติดตามปริมาณ'});
+  else if(gleak==='no') alerts.push({t:'ok',m:'ไม่พบ oil leak'});
+
+  if(!isNaN(cin)&&!isNaN(cout)){
+    const dt=cin-cout;
+    if(dt<5) alerts.push({t:'warn',m:'Oil cooler ΔT เพียง '+Math.round(dt)+'°C — cooler อาจอุดตัน ทำความสะอาด fins ทันที'});
+    else alerts.push({t:'ok',m:'Oil cooler ทำงานปกติ ΔT = '+Math.round(dt)+'°C'});
+  }
+
+  if(alerts.length===0){alerts.push({t:'ok',m:'กรุณากรอกค่าพารามิเตอร์เพื่อประเมินผล'});}
+
+  const box=document.getElementById('eval-result');
+  const iconMap={ok:'✓',warn:'⚠',err:'✗'};
+  box.innerHTML='<div class="result-box-header">📊 ผลการประเมิน — '+alerts.length+' รายการ</div>'+
+    alerts.map(a=>'<div class="alert-row alert-'+a.t+'"><span class="alert-icon">'+iconMap[a.t]+'</span>'+a.m+'</div>').join('');
+  box.classList.add('show');
+}
+
+/* ── Progress tracker ── */
+function updateProgress(){
+  const allCbs=document.querySelectorAll('#panel-wbs .task-cb');
+  const pmRows=Array.from(document.querySelectorAll('#panel-wbs .task-row')).filter(r=>r.querySelector('.lv-pm'));
+  const proRows=Array.from(document.querySelectorAll('#panel-wbs .task-row')).filter(r=>r.querySelector('.lv-pro'));
+  const pdmRows=Array.from(document.querySelectorAll('#panel-wbs .task-row')).filter(r=>r.querySelector('.lv-pdm'));
+
+  function counted(rows){return rows.filter(r=>r.querySelector('.task-cb')&&r.querySelector('.task-cb').checked).length;}
+  function setCard(pctId,barId,subId,done,total){
+    const pct=total>0?Math.round((done/total)*100):0;
+    document.getElementById(pctId).textContent=pct+'%';
+    document.getElementById(barId).style.width=pct+'%';
+    document.getElementById(subId).textContent=done+' / '+total+' tasks';
+  }
+  const allDone=Array.from(allCbs).filter(c=>c.checked).length;
+  setCard('pm-pct','pm-bar','pm-sub',counted(pmRows),pmRows.length);
+  setCard('pro-pct','pro-bar','pro-sub',counted(proRows),proRows.length);
+  setCard('pdm-pct','pdm-bar','pdm-sub',counted(pdmRows),pdmRows.length);
+  setCard('all-pct','all-bar','all-sub',allDone,allCbs.length);
+}
+
+document.querySelectorAll('#panel-wbs .task-cb').forEach(cb=>{
+  cb.addEventListener('change',()=>{
+    if(document.getElementById('panel-progress').classList.contains('active')) updateProgress();
+  });
+});
+</script>
+</body>
+</html>

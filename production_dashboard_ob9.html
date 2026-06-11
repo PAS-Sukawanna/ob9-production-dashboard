@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Production Dashboard — OB.9</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<style>
+/* ── Reset & Base ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Segoe UI', Arial, sans-serif; font-size: 14px; background: #F4F6F9; color: #1A2340; line-height: 1.5; }
+
+/* ── Page Header ── */
+.page-header {
+  background: linear-gradient(135deg, #0D2657 0%, #1A4A8A 60%, #1D7A9E 100%);
+  padding: 20px 24px 16px;
+  border-bottom: 4px solid #F4A020;
+}
+.page-header h1 { color: #fff; font-size: 20px; font-weight: 700; letter-spacing: 0.3px; }
+.page-header .sub { color: #B8D4F0; font-size: 12px; margin-top: 4px; }
+.header-badges { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; align-items: center; }
+.hbadge { padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+.hb-warn { background: #F4A020; color: #1A2340; }
+.hb-info { background: rgba(255,255,255,0.2); color: #fff; border: 1px solid rgba(255,255,255,0.4); }
+#lastUpdated { color: #B8D4F0; font-size: 11px; margin-left: auto; }
+
+/* ── Container ── */
+.container { max-width: 1200px; margin: 0 auto; padding: 20px 16px 40px; }
+
+/* ── Tabs ── */
+.tabs { display: flex; gap: 4px; margin-bottom: 20px; flex-wrap: wrap; border-bottom: 2px solid #D0D8E8; padding-bottom: 4px; }
+.tab {
+  padding: 8px 18px; border-radius: 6px 6px 0 0; font-size: 13px; font-weight: 500;
+  cursor: pointer; color: #5A6A8A; background: #E8EDF5;
+  border: 1.5px solid #C4CEDF; border-bottom: none;
+  transition: all .15s; user-select: none;
+}
+.tab:hover:not(.active) { background: #D0D9ED; color: #1A2340; }
+.tab.active { background: #fff; color: #0D2657; border-color: #3A7BD5; border-bottom: 2px solid #fff; margin-bottom: -2px; font-weight: 700; }
+.panel { display: none; }
+.panel.active { display: block; }
+
+/* ── Section Title ── */
+.section-title {
+  font-size: 14px; font-weight: 700; color: #0D2657;
+  margin: 20px 0 10px;
+  padding: 6px 12px 6px 14px;
+  background: #EBF1FB;
+  border-left: 5px solid #3A7BD5;
+  border-radius: 0 6px 6px 0;
+  border: 1px solid #C4D6F0;
+}
+.section-title.orange { border-left-color: #E07820; background: #FDF3E8; border-color: #F0D4B0; }
+.section-title.green  { border-left-color: #1A8A55; background: #E8F5EE; border-color: #B0D8C0; }
+.section-title.purple { border-left-color: #6340C0; background: #F0EDFB; border-color: #CEC4EC; }
+
+/* ── Metric Grid ── */
+.metric-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(155px, 1fr)); gap: 12px; margin-bottom: 20px; }
+.metric {
+  background: #fff;
+  border-radius: 8px;
+  padding: 14px 16px;
+  border: 1.5px solid #C8D4E8;
+  border-top: 4px solid #3A7BD5;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+}
+.metric.orange { border-top-color: #E07820; }
+.metric.green  { border-top-color: #1A8A55; }
+.metric.red    { border-top-color: #C02020; }
+.metric.purple { border-top-color: #6340C0; }
+.metric-label { font-size: 11px; font-weight: 600; color: #4A5A78; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.4px; }
+.metric-value { font-size: 22px; font-weight: 700; color: #0D2657; }
+.metric-sub { font-size: 11px; color: #7A8AA8; margin-top: 3px; }
+
+/* ── Card ── */
+.card {
+  background: #fff;
+  border: 1.5px solid #C8D4E8;
+  border-radius: 8px;
+  padding: 16px 18px;
+  margin-bottom: 14px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+/* ── Tables ── */
+.table-wrap { overflow-x: auto; border-radius: 8px; border: 1.5px solid #C8D4E8; margin-bottom: 14px; }
+.table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.table thead tr { background: #0D2657; }
+.table thead th {
+  padding: 10px 12px; font-weight: 600; font-size: 12px;
+  color: #fff; text-align: left; white-space: nowrap;
+  border-right: 1px solid rgba(255,255,255,0.15);
+}
+.table thead th:last-child { border-right: none; }
+.table tbody tr { border-bottom: 1.5px solid #D8E2F0; }
+.table tbody tr:nth-child(even) { background: #F4F7FB; }
+.table tbody tr:hover { background: #EBF2FF; }
+.table td { padding: 9px 12px; color: #1A2340; vertical-align: middle; border-right: 1px solid #D8E2F0; white-space: nowrap; }
+.table td:last-child { border-right: none; }
+.table tr.row-critical td:first-child { border-left: 4px solid #C02020; }
+.table tr.row-critical { background: #FFF0EE !important; }
+.table tr.row-warn td:first-child { border-left: 4px solid #E07820; }
+.table tr.row-warn { background: #FFFBEC !important; }
+.table tr.row-ok td:first-child { border-left: 4px solid #1A8A55; }
+.table tr.row-ok { background: #F0FBF4 !important; }
+
+/* ── Badges ── */
+.badge {
+  display: inline-flex; align-items: center;
+  font-size: 11px; font-weight: 700; padding: 3px 9px;
+  border-radius: 20px; white-space: nowrap;
+  border: 1px solid transparent;
+}
+.badge-danger  { background: #FEEDED; color: #A01010; border-color: #F4BFBF; }
+.badge-warn    { background: #FFF4E0; color: #9A5500; border-color: #F0D89A; }
+.badge-success { background: #E4F7EC; color: #0F6630; border-color: #A8DFC0; }
+.badge-info    { background: #E4EFFE; color: #0A3A88; border-color: #A8C4F4; }
+
+/* ── Two-col chart layout ── */
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+@media (max-width: 800px) { .two-col { grid-template-columns: 1fr; } }
+.chart-box { position: relative; height: 280px; }
+.chart-box.small { height: 220px; }
+
+/* ── Settings panel ── */
+.settings-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 10px; }
+.settings-row label { font-size: 12px; font-weight: 600; color: #4A5A78; min-width: 150px; }
+.settings-row input, .settings-row select {
+  flex: 1; min-width: 200px; padding: 8px 10px; border: 1.5px solid #C4CEDF; border-radius: 6px; font-size: 13px;
+}
+.btn {
+  padding: 8px 18px; border-radius: 6px; font-size: 13px; font-weight: 700;
+  cursor: pointer; border: none; background: #3A7BD5; color: #fff; transition: background .15s;
+}
+.btn:hover { background: #1A4A8A; }
+.btn.secondary { background: #E8EDF5; color: #4A5A78; border: 1.5px solid #C4CEDF; }
+.btn.secondary:hover { background: #D0D9ED; }
+.note { font-size: 12px; color: #7A8AA8; margin-top: 6px; line-height: 1.6; }
+.note code { background: #EBF1FB; padding: 1px 5px; border-radius: 4px; font-size: 11px; }
+#statusMsg { font-size: 12px; font-weight: 600; margin-top: 8px; }
+#statusMsg.ok { color: #1A8A55; }
+#statusMsg.err { color: #C02020; }
+
+/* ── Filter bar ── */
+.filter-bar { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 16px; }
+.filter-bar label { font-size: 12px; font-weight: 600; color: #4A5A78; }
+.filter-bar select, .filter-bar input { padding: 7px 10px; border: 1.5px solid #C4CEDF; border-radius: 6px; font-size: 13px; }
+</style>
+</head>
+<body>
+
+<div class="page-header">
+  <h1>📊 Production Dashboard — Conveyor OB.9</h1>
+  <div class="sub">ติดตามผลผลิต (Production Output) เทียบเป้าหมายรายวัน / รายเดือน พร้อม Downtime &amp; OEE</div>
+  <div class="header-badges">
+    <span class="hbadge hb-warn">OB.9</span>
+    <span class="hbadge hb-info">หน่วย: ตัน (Ton) / BCM</span>
+    <span id="lastUpdated">ยังไม่เชื่อมต่อข้อมูล</span>
+  </div>
+</div>
+
+<div class="container">
+
+  <div class="tabs">
+    <div class="tab active" data-tab="overview">ภาพรวม</div>
+    <div class="tab" data-tab="daily">รายวัน</div>
+    <div class="tab" data-tab="monthly">รายเดือน</div>
+    <div class="tab" data-tab="settings">ตั้งค่าเชื่อมต่อข้อมูล</div>
+  </div>
+
+  <!-- ═══ OVERVIEW ═══ -->
+  <div class="panel active" id="panel-overview">
+    <div class="section-title">KPI สรุปวันล่าสุด</div>
+    <div class="metric-grid" id="kpiLatest">
+      <div class="metric"><div class="metric-label">วันที่ล่าสุด</div><div class="metric-value">-</div></div>
+    </div>
+
+    <div class="section-title green">KPI สะสมเดือนนี้ (MTD)</div>
+    <div class="metric-grid" id="kpiMTD"></div>
+
+    <div class="section-title orange">ภาพรวม OEE &amp; Downtime (เดือนนี้)</div>
+    <div class="metric-grid" id="kpiOEE"></div>
+
+    <div class="two-col">
+      <div class="card">
+        <div class="section-title" style="margin-top:0">แนวโน้มผลผลิตรายเดือน (Ton) — เป้าหมาย vs จริง</div>
+        <div class="chart-box"><canvas id="chartMonthlyTon"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="section-title purple" style="margin-top:0">แนวโน้มผลผลิตรายเดือน (BCM) — เป้าหมาย vs จริง</div>
+        <div class="chart-box"><canvas id="chartMonthlyBCM"></canvas></div>
+      </div>
+    </div>
+
+    <div class="two-col">
+      <div class="card">
+        <div class="section-title green" style="margin-top:0">แนวโน้ม OEE รายเดือน (%)</div>
+        <div class="chart-box small"><canvas id="chartOEE"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="section-title orange" style="margin-top:0">สาเหตุ Downtime (สะสมเดือนนี้)</div>
+        <div class="chart-box small"><canvas id="chartDowntime"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ DAILY ═══ -->
+  <div class="panel" id="panel-daily">
+    <div class="section-title">ข้อมูลรายวัน</div>
+    <div class="filter-bar">
+      <label>เดือน:</label>
+      <select id="dailyMonthFilter"><option value="">ทั้งหมด</option></select>
+    </div>
+
+    <div class="card">
+      <div class="section-title" style="margin-top:0">ผลผลิตรายวัน (Ton) — เป้าหมาย vs จริง</div>
+      <div class="chart-box"><canvas id="chartDailyTon"></canvas></div>
+    </div>
+
+    <div class="table-wrap">
+      <table class="table" id="dailyTable">
+        <thead>
+          <tr>
+            <th>วันที่</th><th>กะ</th>
+            <th>เป้าหมาย (Ton)</th><th>ผลผลิตจริง (Ton)</th><th>% บรรลุ Ton</th>
+            <th>เป้าหมาย (BCM)</th><th>ผลผลิตจริง (BCM)</th><th>% บรรลุ BCM</th>
+            <th>ชม.ทำงาน</th><th>ชม.หยุด</th><th>สาเหตุหยุด</th>
+            <th>Avail %</th><th>Perf %</th><th>Qual %</th><th>OEE %</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ═══ MONTHLY ═══ -->
+  <div class="panel" id="panel-monthly">
+    <div class="section-title">สรุปรายเดือน</div>
+    <div class="table-wrap">
+      <table class="table" id="monthlyTable">
+        <thead>
+          <tr>
+            <th>เดือน</th>
+            <th>เป้าหมาย (Ton)</th><th>ผลผลิตจริง (Ton)</th><th>% บรรลุ</th>
+            <th>เป้าหมาย (BCM)</th><th>ผลผลิตจริง (BCM)</th><th>% บรรลุ</th>
+            <th>Availability %</th><th>Performance %</th><th>Quality %</th><th>OEE %</th>
+            <th>รวม Downtime (ชม.)</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <div class="note">หมายเหตุ: หากไม่มีชีต "Monthly" หรือไม่มีข้อมูล ระบบจะคำนวณสรุปรายเดือนให้อัตโนมัติจากข้อมูลรายวัน (ชีต "Daily")</div>
+  </div>
+
+  <!-- ═══ SETTINGS ═══ -->
+  <div class="panel" id="panel-settings">
+    <div class="section-title">เชื่อมต่อ Google Sheet</div>
+    <div class="card">
+      <div class="settings-row">
+        <label>Google Sheet ID</label>
+        <input type="text" id="sheetId" placeholder="เช่น 1AbCDefGhIjkLmNoPQRstuVWxyz1234567890">
+      </div>
+      <div class="settings-row">
+        <label>ชื่อชีตรายวัน</label>
+        <input type="text" id="dailySheetName" value="Daily">
+      </div>
+      <div class="settings-row">
+        <label>ชื่อชีตรายเดือน</label>
+        <input type="text" id="monthlySheetName" value="Monthly">
+      </div>
+      <div class="settings-row">
+        <button class="btn" id="btnConnect">เชื่อมต่อ &amp; โหลดข้อมูล</button>
+        <button class="btn secondary" id="btnLoadSample">โหลดข้อมูลตัวอย่าง (Demo)</button>
+      </div>
+      <div id="statusMsg"></div>
+
+      <div class="note">
+        <strong>วิธีเตรียม Google Sheet:</strong><br>
+        1. สร้าง Google Sheet ใหม่ และตั้งชื่อชีตว่า <code>Daily</code> และ <code>Monthly</code> (ดูโครงสร้างคอลัมน์ด้านล่าง)<br>
+        2. ไปที่ <strong>File &gt; Share &gt; Publish to web</strong> แล้วเลือก "Entire Document" และกด Publish<br>
+        3. คัดลอก Sheet ID จาก URL ของ Google Sheet เช่น<br>
+        <code>https://docs.google.com/spreadsheets/d/<u>SHEET_ID_ตรงนี้</u>/edit</code><br>
+        4. วาง Sheet ID ในช่องด้านบน แล้วกด "เชื่อมต่อ &amp; โหลดข้อมูล"<br>
+        5. การตั้งค่าจะถูกบันทึกไว้ในเบราว์เซอร์ (localStorage) สำหรับครั้งถัดไป
+      </div>
+    </div>
+
+    <div class="section-title green">โครงสร้างคอลัมน์ — ชีต "Daily" (บันทึกทุกวัน/ทุกกะ)</div>
+    <div class="table-wrap">
+      <table class="table">
+        <thead><tr><th>คอลัมน์</th><th>คำอธิบาย</th><th>ตัวอย่าง</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Date</strong></td><td>วันที่ (YYYY-MM-DD)</td><td>2026-06-01</td></tr>
+          <tr><td><strong>Shift</strong></td><td>กะทำงาน</td><td>A</td></tr>
+          <tr><td><strong>Target_Ton</strong></td><td>เป้าหมายขนส่งวันนั้น (ตัน)</td><td>12000</td></tr>
+          <tr><td><strong>Actual_Ton</strong></td><td>ผลผลิตจริง (ตัน)</td><td>11500</td></tr>
+          <tr><td><strong>Target_BCM</strong></td><td>เป้าหมาย (BCM)</td><td>8000</td></tr>
+          <tr><td><strong>Actual_BCM</strong></td><td>ผลผลิตจริง (BCM)</td><td>7700</td></tr>
+          <tr><td><strong>Operating_Hr</strong></td><td>ชั่วโมงทำงานจริง</td><td>20.5</td></tr>
+          <tr><td><strong>Downtime_Hr</strong></td><td>ชั่วโมงหยุดทำงาน</td><td>3.5</td></tr>
+          <tr><td><strong>Downtime_Reason</strong></td><td>สาเหตุหลักที่หยุด</td><td>Belt splice repair</td></tr>
+          <tr><td><strong>Availability_Pct</strong></td><td>Availability (%)</td><td>85.4</td></tr>
+          <tr><td><strong>Performance_Pct</strong></td><td>Performance (%)</td><td>92.0</td></tr>
+          <tr><td><strong>Quality_Pct</strong></td><td>Quality (%)</td><td>98.5</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="note">OEE % จะคำนวณอัตโนมัติ = Availability × Performance × Quality / 10000</div>
+
+    <div class="section-title purple">โครงสร้างคอลัมน์ — ชีต "Monthly" (ไม่บังคับ — ถ้าไม่มี ระบบสรุปจาก Daily ให้)</div>
+    <div class="table-wrap">
+      <table class="table">
+        <thead><tr><th>คอลัมน์</th><th>คำอธิบาย</th><th>ตัวอย่าง</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Month</strong></td><td>เดือน (YYYY-MM)</td><td>2026-06</td></tr>
+          <tr><td><strong>Target_Ton</strong></td><td>เป้าหมายรวมเดือน (ตัน)</td><td>360000</td></tr>
+          <tr><td><strong>Actual_Ton</strong></td><td>ผลผลิตจริงรวมเดือน (ตัน)</td><td>345000</td></tr>
+          <tr><td><strong>Target_BCM</strong></td><td>เป้าหมายรวมเดือน (BCM)</td><td>240000</td></tr>
+          <tr><td><strong>Actual_BCM</strong></td><td>ผลผลิตจริงรวมเดือน (BCM)</td><td>231000</td></tr>
+          <tr><td><strong>Avg_Availability_Pct</strong></td><td>ค่าเฉลี่ย Availability (%)</td><td>86.2</td></tr>
+          <tr><td><strong>Avg_Performance_Pct</strong></td><td>ค่าเฉลี่ย Performance (%)</td><td>91.5</td></tr>
+          <tr><td><strong>Avg_Quality_Pct</strong></td><td>ค่าเฉลี่ย Quality (%)</td><td>98.0</td></tr>
+          <tr><td><strong>Downtime_Hr</strong></td><td>รวมชั่วโมงหยุดทำงาน</td><td>62</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const STORAGE_KEY = 'ob9_dashboard_config';
+let dailyData = [];
+let monthlyData = [];
+let charts = {};
+
+// ── Tab switching ──
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById('panel-' + tab.dataset.tab).classList.add('active');
+  });
+});
+
+// ── CSV parser (handles quoted fields) ──
+function parseCSV(text) {
+  const rows = [];
+  let row = [], field = '', inQuotes = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i], next = text[i+1];
+    if (inQuotes) {
+      if (c === '"' && next === '"') { field += '"'; i++; }
+      else if (c === '"') { inQuotes = false; }
+      else { field += c; }
+    } else {
+      if (c === '"') inQuotes = true;
+      else if (c === ',') { row.push(field); field = ''; }
+      else if (c === '\n' || c === '\r') {
+        if (c === '\r' && next === '\n') i++;
+        row.push(field); field = '';
+        if (row.some(v => v.trim() !== '')) rows.push(row);
+        row = [];
+      } else { field += c; }
+    }
+  }
+  if (field !== '' || row.length) { row.push(field); rows.push(row); }
+  if (!rows.length) return [];
+  const headers = rows[0].map(h => h.trim());
+  return rows.slice(1).map(r => {
+    const obj = {};
+    headers.forEach((h, idx) => obj[h] = (r[idx] !== undefined ? r[idx].trim() : ''));
+    return obj;
+  });
+}
+
+function num(v) {
+  if (v === undefined || v === null || v === '') return 0;
+  const n = parseFloat(String(v).replace(/,/g, ''));
+  return isNaN(n) ? 0 : n;
+}
+
+function pct(actual, target) {
+  if (!target) return 0;
+  return (actual / target) * 100;
+}
+
+function fmt(n, dec=0) {
+  return Number(n).toLocaleString('en-US', { minimumFractionDigits: dec, maximumFractionDigits: dec });
+}
+
+// ── Build CSV export URL (gviz) ──
+function gvizUrl(sheetId, sheetName) {
+  return `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(sheetName)}`;
+}
+
+async function fetchSheet(sheetId, sheetName) {
+  const url = gvizUrl(sheetId, sheetName);
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`โหลดชีต "${sheetName}" ไม่สำเร็จ (HTTP ${res.status})`);
+  const text = await res.text();
+  if (text.trim().startsWith('<')) throw new Error(`ชีต "${sheetName}" ไม่พบ หรือยังไม่ได้ Publish to web`);
+  return parseCSV(text);
+}
+
+// ── Compute monthly summary from daily rows ──
+function computeMonthlyFromDaily(daily) {
+  const groups = {};
+  daily.forEach(r => {
+    const month = (r.Date || '').slice(0, 7);
+    if (!month) return;
+    if (!groups[month]) groups[month] = {
+      Month: month, Target_Ton: 0, Actual_Ton: 0, Target_BCM: 0, Actual_BCM: 0,
+      avSum: 0, perfSum: 0, qualSum: 0, count: 0, Downtime_Hr: 0
+    };
+    const g = groups[month];
+    g.Target_Ton += num(r.Target_Ton);
+    g.Actual_Ton += num(r.Actual_Ton);
+    g.Target_BCM += num(r.Target_BCM);
+    g.Actual_BCM += num(r.Actual_BCM);
+    g.Downtime_Hr += num(r.Downtime_Hr);
+    g.avSum += num(r.Availability_Pct);
+    g.perfSum += num(r.Performance_Pct);
+    g.qualSum += num(r.Quality_Pct);
+    g.count++;
+  });
+  return Object.values(groups).map(g => ({
+    Month: g.Month,
+    Target_Ton: g.Target_Ton,
+    Actual_Ton: g.Actual_Ton,
+    Target_BCM: g.Target_BCM,
+    Actual_BCM: g.Actual_BCM,
+    Avg_Availability_Pct: g.count ? g.avSum / g.count : 0,
+    Avg_Performance_Pct: g.count ? g.perfSum / g.count : 0,
+    Avg_Quality_Pct: g.count ? g.qualSum / g.count : 0,
+    Downtime_Hr: g.Downtime_Hr
+  })).sort((a,b) => a.Month.localeCompare(b.Month));
+}
+
+// ── Render everything ──
+function renderAll() {
+  dailyData.sort((a,b) => (a.Date || '').localeCompare(b.Date || ''));
+  if (!monthlyData.length) monthlyData = computeMonthlyFromDaily(dailyData);
+  monthlyData.sort((a,b) => (a.Month || '').localeCompare(b.Month || ''));
+
+  renderKPIs();
+  renderDailyTable();
+  renderMonthlyTable();
+  renderMonthFilter();
+  renderCharts();
+
+  document.getElementById('lastUpdated').textContent =
+    'อัปเดตล่าสุด: ' + new Date().toLocaleString('th-TH');
+}
+
+function oeeOf(av, perf, qual) {
+  return (num(av) * num(perf) * num(qual)) / 10000;
+}
+
+function renderKPIs() {
+  const latestEl = document.getElementById('kpiLatest');
+  const mtdEl = document.getElementById('kpiMTD');
+  const oeeEl = document.getElementById('kpiOEE');
+  latestEl.innerHTML = ''; mtdEl.innerHTML = ''; oeeEl.innerHTML = '';
+
+  if (!dailyData.length) {
+    latestEl.innerHTML = '<div class="metric"><div class="metric-label">สถานะ</div><div class="metric-value">ไม่มีข้อมูล</div></div>';
+    return;
+  }
+
+  const latest = dailyData[dailyData.length - 1];
+  const tonPct = pct(num(latest.Actual_Ton), num(latest.Target_Ton));
+  const bcmPct = pct(num(latest.Actual_BCM), num(latest.Target_BCM));
+
+  function metricCard(label, value, sub, cls) {
+    return `<div class="metric ${cls||''}"><div class="metric-label">${label}</div><div class="metric-value">${value}</div><div class="metric-sub">${sub||''}</div></div>`;
+  }
+
+  latestEl.innerHTML =
+    metricCard('วันที่ล่าสุด', latest.Date || '-', 'กะ ' + (latest.Shift || '-')) +
+    metricCard('ผลผลิต (Ton)', fmt(num(latest.Actual_Ton)), 'เป้าหมาย ' + fmt(num(latest.Target_Ton)), tonPct >= 100 ? 'green' : (tonPct >= 90 ? 'orange' : 'red')) +
+    metricCard('% บรรลุเป้า (Ton)', fmt(tonPct,1)+'%', '', tonPct >= 100 ? 'green' : (tonPct >= 90 ? 'orange' : 'red')) +
+    metricCard('ผลผลิต (BCM)', fmt(num(latest.Actual_BCM)), 'เป้าหมาย ' + fmt(num(latest.Target_BCM)), bcmPct >= 100 ? 'green' : (bcmPct >= 90 ? 'orange' : 'red')) +
+    metricCard('% บรรลุเป้า (BCM)', fmt(bcmPct,1)+'%', '', bcmPct >= 100 ? 'green' : (bcmPct >= 90 ? 'orange' : 'red')) +
+    metricCard('ชม.หยุดทำงาน', fmt(num(latest.Downtime_Hr),1), latest.Downtime_Reason || '-', num(latest.Downtime_Hr) > 2 ? 'red' : '');
+
+  // MTD
+  const curMonth = (latest.Date || '').slice(0,7);
+  const mtdRows = dailyData.filter(r => (r.Date || '').slice(0,7) === curMonth);
+  const sum = (key) => mtdRows.reduce((a,r) => a + num(r[key]), 0);
+  const mtdTargetTon = sum('Target_Ton'), mtdActualTon = sum('Actual_Ton');
+  const mtdTargetBCM = sum('Target_BCM'), mtdActualBCM = sum('Actual_BCM');
+  const mtdTonPct = pct(mtdActualTon, mtdTargetTon);
+  const mtdBcmPct = pct(mtdActualBCM, mtdTargetBCM);
+
+  mtdEl.innerHTML =
+    metricCard('เป้าหมายสะสม (Ton)', fmt(mtdTargetTon), curMonth) +
+    metricCard('ผลผลิตสะสม (Ton)', fmt(mtdActualTon), '% บรรลุ ' + fmt(mtdTonPct,1) + '%', mtdTonPct>=100?'green':(mtdTonPct>=90?'orange':'red')) +
+    metricCard('เป้าหมายสะสม (BCM)', fmt(mtdTargetBCM), curMonth) +
+    metricCard('ผลผลิตสะสม (BCM)', fmt(mtdActualBCM), '% บรรลุ ' + fmt(mtdBcmPct,1) + '%', mtdBcmPct>=100?'green':(mtdBcmPct>=90?'orange':'red'));
+
+  // OEE & downtime
+  const avgAv = mtdRows.length ? mtdRows.reduce((a,r)=>a+num(r.Availability_Pct),0)/mtdRows.length : 0;
+  const avgPerf = mtdRows.length ? mtdRows.reduce((a,r)=>a+num(r.Performance_Pct),0)/mtdRows.length : 0;
+  const avgQual = mtdRows.length ? mtdRows.reduce((a,r)=>a+num(r.Quality_Pct),0)/mtdRows.length : 0;
+  const oee = oeeOf(avgAv, avgPerf, avgQual);
+  const totalDowntime = sum('Downtime_Hr');
+
+  oeeEl.innerHTML =
+    metricCard('Availability', fmt(avgAv,1)+'%', 'ค่าเฉลี่ยเดือนนี้', avgAv>=85?'green':(avgAv>=70?'orange':'red')) +
+    metricCard('Performance', fmt(avgPerf,1)+'%', 'ค่าเฉลี่ยเดือนนี้', avgPerf>=85?'green':(avgPerf>=70?'orange':'red')) +
+    metricCard('Quality', fmt(avgQual,1)+'%', 'ค่าเฉลี่ยเดือนนี้', avgQual>=95?'green':(avgQual>=85?'orange':'red')) +
+    metricCard('OEE', fmt(oee,1)+'%', 'Availability × Performance × Quality', oee>=80?'green':(oee>=60?'orange':'red')) +
+    metricCard('รวม Downtime (ชม.)', fmt(totalDowntime,1), curMonth, totalDowntime>20?'red':'');
+}
+
+function rowClass(actualPct) {
+  if (actualPct >= 100) return 'row-ok';
+  if (actualPct >= 90) return 'row-warn';
+  return 'row-critical';
+}
+
+function renderDailyTable(filterMonth) {
+  const tbody = document.querySelector('#dailyTable tbody');
+  tbody.innerHTML = '';
+  let rows = dailyData;
+  if (filterMonth) rows = rows.filter(r => (r.Date||'').slice(0,7) === filterMonth);
+
+  rows.slice().reverse().forEach(r => {
+    const tonPct = pct(num(r.Actual_Ton), num(r.Target_Ton));
+    const bcmPct = pct(num(r.Actual_BCM), num(r.Target_BCM));
+    const oee = oeeOf(r.Availability_Pct, r.Performance_Pct, r.Quality_Pct);
+    const tr = document.createElement('tr');
+    tr.className = rowClass(tonPct);
+    tr.innerHTML = `
+      <td><strong>${r.Date||''}</strong></td>
+      <td>${r.Shift||''}</td>
+      <td>${fmt(num(r.Target_Ton))}</td>
+      <td>${fmt(num(r.Actual_Ton))}</td>
+      <td>${fmt(tonPct,1)}%</td>
+      <td>${fmt(num(r.Target_BCM))}</td>
+      <td>${fmt(num(r.Actual_BCM))}</td>
+      <td>${fmt(bcmPct,1)}%</td>
+      <td>${fmt(num(r.Operating_Hr),1)}</td>
+      <td>${fmt(num(r.Downtime_Hr),1)}</td>
+      <td>${r.Downtime_Reason||'-'}</td>
+      <td>${fmt(num(r.Availability_Pct),1)}</td>
+      <td>${fmt(num(r.Performance_Pct),1)}</td>
+      <td>${fmt(num(r.Quality_Pct),1)}</td>
+      <td><strong>${fmt(oee,1)}</strong></td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function renderMonthFilter() {
+  const sel = document.getElementById('dailyMonthFilter');
+  const months = [...new Set(dailyData.map(r => (r.Date||'').slice(0,7)))].filter(Boolean).sort().reverse();
+  const current = sel.value;
+  sel.innerHTML = '<option value="">ทั้งหมด</option>' + months.map(m => `<option value="${m}">${m}</option>`).join('');
+  sel.value = current;
+  sel.onchange = () => renderDailyTable(sel.value);
+}
+
+function renderMonthlyTable() {
+  const tbody = document.querySelector('#monthlyTable tbody');
+  tbody.innerHTML = '';
+  monthlyData.slice().reverse().forEach(r => {
+    const tonPct = pct(num(r.Actual_Ton), num(r.Target_Ton));
+    const bcmPct = pct(num(r.Actual_BCM), num(r.Target_BCM));
+    const oee = oeeOf(r.Avg_Availability_Pct, r.Avg_Performance_Pct, r.Avg_Quality_Pct);
+    const tr = document.createElement('tr');
+    tr.className = rowClass(tonPct);
+    tr.innerHTML = `
+      <td><strong>${r.Month||''}</strong></td>
+      <td>${fmt(num(r.Target_Ton))}</td>
+      <td>${fmt(num(r.Actual_Ton))}</td>
+      <td>${fmt(tonPct,1)}%</td>
+      <td>${fmt(num(r.Target_BCM))}</td>
+      <td>${fmt(num(r.Actual_BCM))}</td>
+      <td>${fmt(bcmPct,1)}%</td>
+      <td>${fmt(num(r.Avg_Availability_Pct),1)}</td>
+      <td>${fmt(num(r.Avg_Performance_Pct),1)}</td>
+      <td>${fmt(num(r.Avg_Quality_Pct),1)}</td>
+      <td><strong>${fmt(oee,1)}</strong></td>
+      <td>${fmt(num(r.Downtime_Hr),1)}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function destroyChart(id) {
+  if (charts[id]) { charts[id].destroy(); delete charts[id]; }
+}
+
+function renderCharts() {
+  const months = monthlyData.map(r => r.Month);
+
+  destroyChart('monthlyTon');
+  charts.monthlyTon = new Chart(document.getElementById('chartMonthlyTon'), {
+    type: 'bar',
+    data: {
+      labels: months,
+      datasets: [
+        { label: 'เป้าหมาย (Ton)', data: monthlyData.map(r => num(r.Target_Ton)), backgroundColor: 'rgba(58,123,213,0.35)', borderColor: '#3A7BD5', borderWidth: 1 },
+        { label: 'ผลผลิตจริง (Ton)', data: monthlyData.map(r => num(r.Actual_Ton)), backgroundColor: '#1A8A55' }
+      ]
+    },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+  });
+
+  destroyChart('monthlyBCM');
+  charts.monthlyBCM = new Chart(document.getElementById('chartMonthlyBCM'), {
+    type: 'bar',
+    data: {
+      labels: months,
+      datasets: [
+        { label: 'เป้าหมาย (BCM)', data: monthlyData.map(r => num(r.Target_BCM)), backgroundColor: 'rgba(99,64,192,0.3)', borderColor: '#6340C0', borderWidth: 1 },
+        { label: 'ผลผลิตจริง (BCM)', data: monthlyData.map(r => num(r.Actual_BCM)), backgroundColor: '#6340C0' }
+      ]
+    },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+  });
+
+  destroyChart('oee');
+  charts.oee = new Chart(document.getElementById('chartOEE'), {
+    type: 'line',
+    data: {
+      labels: months,
+      datasets: [
+        { label: 'Availability %', data: monthlyData.map(r => num(r.Avg_Availability_Pct)), borderColor: '#3A7BD5', tension: 0.3 },
+        { label: 'Performance %', data: monthlyData.map(r => num(r.Avg_Performance_Pct)), borderColor: '#E07820', tension: 0.3 },
+        { label: 'Quality %', data: monthlyData.map(r => num(r.Avg_Quality_Pct)), borderColor: '#1A8A55', tension: 0.3 },
+        { label: 'OEE %', data: monthlyData.map(r => oeeOf(r.Avg_Availability_Pct, r.Avg_Performance_Pct, r.Avg_Quality_Pct)), borderColor: '#C02020', borderWidth: 3, tension: 0.3 }
+      ]
+    },
+    options: { responsive: true, maintainAspectRatio: false, scales: { y: { min: 0, max: 110 } }, plugins: { legend: { position: 'bottom' } } }
+  });
+
+  // Downtime reasons - current month
+  const curMonth = months[months.length - 1];
+  const reasonMap = {};
+  dailyData.filter(r => (r.Date||'').slice(0,7) === curMonth).forEach(r => {
+    const reason = r.Downtime_Reason && r.Downtime_Reason.trim() ? r.Downtime_Reason.trim() : 'ไม่ระบุ';
+    reasonMap[reason] = (reasonMap[reason] || 0) + num(r.Downtime_Hr);
+  });
+  destroyChart('downtime');
+  const reasonLabels = Object.keys(reasonMap);
+  const palette = ['#3A7BD5','#E07820','#1A8A55','#C02020','#6340C0','#F4A020','#0D2657','#1D7A9E'];
+  charts.downtime = new Chart(document.getElementById('chartDowntime'), {
+    type: 'doughnut',
+    data: {
+      labels: reasonLabels,
+      datasets: [{ data: reasonLabels.map(l => reasonMap[l]), backgroundColor: reasonLabels.map((_,i)=>palette[i%palette.length]) }]
+    },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+  });
+
+  // Daily ton chart
+  destroyChart('dailyTon');
+  const filterMonth = document.getElementById('dailyMonthFilter').value;
+  let rows = dailyData;
+  if (filterMonth) rows = rows.filter(r => (r.Date||'').slice(0,7) === filterMonth);
+  else rows = dailyData.slice(-30);
+  charts.dailyTon = new Chart(document.getElementById('chartDailyTon'), {
+    type: 'bar',
+    data: {
+      labels: rows.map(r => r.Date),
+      datasets: [
+        { label: 'เป้าหมาย (Ton)', data: rows.map(r => num(r.Target_Ton)), type: 'line', borderColor: '#F4A020', borderWidth: 2, pointRadius: 0, fill: false },
+        { label: 'ผลผลิตจริง (Ton)', data: rows.map(r => num(r.Actual_Ton)), backgroundColor: '#3A7BD5' }
+      ]
+    },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+  });
+}
+
+// re-render daily chart when month filter changes
+document.getElementById('dailyMonthFilter').addEventListener('change', renderCharts);
+
+// ── Settings: load/save config, connect ──
+function loadConfig() {
+  try {
+    const cfg = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+    if (cfg.sheetId) document.getElementById('sheetId').value = cfg.sheetId;
+    if (cfg.dailySheetName) document.getElementById('dailySheetName').value = cfg.dailySheetName;
+    if (cfg.monthlySheetName) document.getElementById('monthlySheetName').value = cfg.monthlySheetName;
+    return cfg;
+  } catch { return {}; }
+}
+
+function saveConfig() {
+  const cfg = {
+    sheetId: document.getElementById('sheetId').value.trim(),
+    dailySheetName: document.getElementById('dailySheetName').value.trim() || 'Daily',
+    monthlySheetName: document.getElementById('monthlySheetName').value.trim() || 'Monthly'
+  };
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(cfg));
+  return cfg;
+}
+
+async function connectAndLoad() {
+  const status = document.getElementById('statusMsg');
+  status.className = ''; status.textContent = 'กำลังโหลดข้อมูล...';
+  const cfg = saveConfig();
+  if (!cfg.sheetId) {
+    status.className = 'err'; status.textContent = 'กรุณาใส่ Google Sheet ID';
+    return;
+  }
+  try {
+    dailyData = await fetchSheet(cfg.sheetId, cfg.dailySheetName);
+    try {
+      monthlyData = await fetchSheet(cfg.sheetId, cfg.monthlySheetName);
+    } catch { monthlyData = []; }
+    if (!dailyData.length) throw new Error('ไม่พบข้อมูลในชีต Daily');
+    renderAll();
+    status.className = 'ok'; status.textContent = `โหลดสำเร็จ: ${dailyData.length} แถว (Daily), ${monthlyData.length} แถว (Monthly)`;
+  } catch (e) {
+    status.className = 'err'; status.textContent = '⚠ ' + e.message;
+  }
+}
+
+function loadSampleData() {
+  const sample = [];
+  const reasons = ['Belt splice repair','Idler replacement','Power outage','Pulley alignment','Scheduled PM','-'];
+  let d = new Date('2026-04-01');
+  for (let i = 0; i < 70; i++) {
+    const date = d.toISOString().slice(0,10);
+    const targetTon = 12000, targetBCM = 8000;
+    const variance = 0.85 + Math.random()*0.2;
+    const downtime = Math.round(Math.random()*4*10)/10;
+    const avail = Math.max(60, 100 - downtime/24*100 - Math.random()*5);
+    const perf = 85 + Math.random()*12;
+    const qual = 95 + Math.random()*4;
+    sample.push({
+      Date: date, Shift: ['A','B','C'][i%3],
+      Target_Ton: targetTon, Actual_Ton: Math.round(targetTon*variance),
+      Target_BCM: targetBCM, Actual_BCM: Math.round(targetBCM*variance),
+      Operating_Hr: (24-downtime).toFixed(1), Downtime_Hr: downtime,
+      Downtime_Reason: downtime > 0.3 ? reasons[Math.floor(Math.random()*(reasons.length-1))] : '-',
+      Availability_Pct: avail.toFixed(1), Performance_Pct: perf.toFixed(1), Quality_Pct: qual.toFixed(1)
+    });
+    d.setDate(d.getDate()+1);
+  }
+  dailyData = sample;
+  monthlyData = [];
+  renderAll();
+  document.getElementById('statusMsg').className = 'ok';
+  document.getElementById('statusMsg').textContent = 'โหลดข้อมูลตัวอย่างเรียบร้อย (Demo - ยังไม่ได้เชื่อมต่อ Google Sheet จริง)';
+}
+
+document.getElementById('btnConnect').addEventListener('click', connectAndLoad);
+document.getElementById('btnLoadSample').addEventListener('click', loadSampleData);
+
+// ── Init ──
+const savedCfg = loadConfig();
+if (savedCfg.sheetId) connectAndLoad();
+else loadSampleData();
+</script>
+</body>
+</html>
