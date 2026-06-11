@@ -710,9 +710,11 @@ async function connectAndLoad() {
     return;
   }
   try {
-    dailyData = await fetchSheet(cfg.sheetId, cfg.dailySheetName);
+    dailyData = (await fetchSheet(cfg.sheetId, cfg.dailySheetName))
+      .filter(r => /^\d{4}-\d{2}-\d{2}/.test(r.Date || ''));
     try {
-      monthlyData = await fetchSheet(cfg.sheetId, cfg.monthlySheetName);
+      monthlyData = (await fetchSheet(cfg.sheetId, cfg.monthlySheetName))
+        .filter(r => /^\d{4}-\d{2}/.test(r.Month || ''));
     } catch { monthlyData = []; }
     if (!dailyData.length) throw new Error('ไม่พบข้อมูลในชีต Daily');
     renderAll();
