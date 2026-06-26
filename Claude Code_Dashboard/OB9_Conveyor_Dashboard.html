@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OB9 Conveyor System Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#f0f2f5;--card:#fff;--text:#1a1a2e;--sub:#6b7280;
+  --purple:#7c3aed;--blue:#2563eb;--cyan:#06b6d4;--green:#10b981;
+  --orange:#f59e0b;--red:#ef4444;--pink:#ec4899;--teal:#14b8a6;
+  --wa:#7c3aed;--wb:#2563eb;--we:#f59e0b;--wn:#10b981;
+  --shadow:0 2px 12px rgba(0,0,0,.08);
+}
+body{font-family:'Segoe UI',Tahoma,sans-serif;background:var(--bg);color:var(--text);line-height:1.5}
+.header{background:linear-gradient(135deg,#1e1b4b,#312e81,#4338ca);color:#fff;padding:20px 30px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
+.header h1{font-size:1.5rem;font-weight:700;letter-spacing:.5px}
+.header .sub{font-size:.8rem;color:#c7d2fe;letter-spacing:2px}
+.header-right{display:flex;align-items:center;gap:15px}
+.header-right select,.header-right button{padding:6px 14px;border-radius:8px;border:1px solid rgba(255,255,255,.3);background:rgba(255,255,255,.12);color:#fff;font-size:.85rem;cursor:pointer}
+.header-right button:hover{background:rgba(255,255,255,.25)}
+.status-dot{width:10px;height:10px;border-radius:50%;display:inline-block;margin-right:6px}
+.status-dot.live{background:#22c55e;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.tabs{display:flex;background:#fff;border-bottom:2px solid #e5e7eb;padding:0 20px;overflow-x:auto}
+.tab{padding:14px 22px;cursor:pointer;font-weight:600;font-size:.9rem;color:var(--sub);border-bottom:3px solid transparent;white-space:nowrap;transition:.2s}
+.tab:hover{color:var(--text)}
+.tab.active{color:var(--purple);border-bottom-color:var(--purple)}
+.content{display:none;padding:20px;max-width:1400px;margin:0 auto}
+.content.active{display:block}
+.grid-4{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin-bottom:20px}
+.grid-2{display:grid;grid-template-columns:repeat(auto-fit,minmax(500px,1fr));gap:20px;margin-bottom:20px}
+.kpi{background:var(--card);border-radius:14px;padding:18px 20px;box-shadow:var(--shadow);position:relative;overflow:hidden}
+.kpi .accent{position:absolute;top:0;left:0;width:5px;height:100%;border-radius:14px 0 0 14px}
+.kpi .label{font-size:.75rem;color:var(--sub);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;padding-left:12px}
+.kpi .value{font-size:1.6rem;font-weight:700;padding-left:12px}
+.kpi .delta{font-size:.75rem;padding-left:12px;margin-top:2px}
+.kpi .delta.up{color:#10b981}.kpi .delta.down{color:#ef4444}
+.chart-card{background:var(--card);border-radius:14px;padding:20px;box-shadow:var(--shadow);margin-bottom:20px}
+.chart-card h3{font-size:.95rem;font-weight:700;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.chart-card h3 .dot{width:8px;height:8px;border-radius:50%}
+.chart-wrap{position:relative;height:320px}
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:.78rem}
+th,td{padding:8px 10px;text-align:right;border-bottom:1px solid #e5e7eb}
+th{background:#f8fafc;font-weight:600;color:var(--sub);position:sticky;top:0}
+td:first-child,th:first-child{text-align:left;font-weight:600}
+tr:hover td{background:#f0f4ff}
+.badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:.7rem;font-weight:600}
+.badge.wa{background:#ede9fe;color:#7c3aed}
+.badge.wb{background:#dbeafe;color:#2563eb}
+.badge.we{background:#fef3c7;color:#d97706}
+.badge.wn{background:#d1fae5;color:#059669}
+.section-title{font-size:1.1rem;font-weight:700;margin:24px 0 14px;padding-left:12px;border-left:4px solid var(--purple)}
+.info-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin:20px 0}
+.info-card{background:var(--card);border-radius:12px;padding:16px;text-align:center;box-shadow:var(--shadow);border-top:3px solid var(--purple)}
+.info-card .num{font-size:1.8rem;font-weight:700;color:var(--purple)}
+.info-card .lbl{font-size:.75rem;color:var(--sub);margin-top:4px}
+.google-sheet-input{display:flex;gap:10px;margin:10px 0;flex-wrap:wrap}
+.google-sheet-input input{flex:1;min-width:300px;padding:8px 14px;border:1px solid #d1d5db;border-radius:8px;font-size:.85rem}
+.google-sheet-input button{padding:8px 20px;background:var(--purple);color:#fff;border:none;border-radius:8px;font-weight:600;cursor:pointer}
+.footer{text-align:center;padding:20px;color:var(--sub);font-size:.75rem;border-top:1px solid #e5e7eb;margin-top:30px}
+@media(max-width:768px){
+  .grid-4{grid-template-columns:repeat(2,1fr)}
+  .grid-2{grid-template-columns:1fr}
+  .info-grid{grid-template-columns:repeat(2,1fr)}
+  .header h1{font-size:1.1rem}
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <h1>OB9 CONVEYOR SYSTEM DASHBOARD</h1>
+    <div class="sub">MAE MOH MINE &middot; WASTE &amp; COAL EXCAVATION CONTRACT No.9 &middot; PRODUCTION &amp; CONSUMPTION MONITORING</div>
+  </div>
+  <div class="header-right">
+    <span><span class="status-dot live"></span>Live Data</span>
+    <select id="yearSelect">
+      <option value="2025">2025 (2568)</option>
+      <option value="2024">2024 (2567)</option>
+    </select>
+    <button onclick="refreshData()">Refresh</button>
+  </div>
+</div>
+
+<div class="tabs">
+  <div class="tab active" data-tab="overview">Overview</div>
+  <div class="tab" data-tab="production_job">Production by Job</div>
+  <div class="tab" data-tab="production_line">Production by Line</div>
+  <div class="tab" data-tab="smu">SMU</div>
+  <div class="tab" data-tab="productivity">Productivity</div>
+  <div class="tab" data-tab="settings">Settings</div>
+</div>
+
+<!-- OVERVIEW -->
+<div class="content active" id="tab-overview">
+  <div class="grid-4" id="kpi-cards"></div>
+  <div class="info-grid" id="overview-steps">
+    <div class="info-card" style="border-top-color:var(--orange)"><div class="num" style="color:var(--orange)">01</div><div class="lbl"><b>EXCAVATION</b><br>EX2500 &middot; EX3600<br>Front Shovel</div></div>
+    <div class="info-card" style="border-top-color:var(--red)"><div class="num" style="color:var(--red)">02</div><div class="lbl"><b>HAULING</b><br>CAT777 (100T) &middot; CAT785 (150T)<br>Dump Truck</div></div>
+    <div class="info-card" style="border-top-color:var(--purple)"><div class="num" style="color:var(--purple)">03</div><div class="lbl"><b>CRUSHING</b><br>Crusher<br>Primary Breaking</div></div>
+    <div class="info-card" style="border-top-color:var(--blue)"><div class="num" style="color:var(--blue)">04</div><div class="lbl"><b>CONVEYING</b><br>WA(BW2200) &middot; WB(BW2000)<br>WN &middot; WE(BW1800)</div></div>
+    <div class="info-card" style="border-top-color:var(--green)"><div class="num" style="color:var(--green)">05</div><div class="lbl"><b>DUMPING</b><br>Dumping Area<br>Final Destination</div></div>
+  </div>
+  <div class="grid-2">
+    <div class="chart-card"><h3><span class="dot" style="background:var(--purple)"></span>Production by Conveyor Line (BCM)</h3><div class="chart-wrap"><canvas id="chartOverviewProd"></canvas></div></div>
+    <div class="chart-card"><h3><span class="dot" style="background:var(--orange)"></span>Electricity Consumption (kWh)</h3><div class="chart-wrap"><canvas id="chartOverviewKwh"></canvas></div></div>
+  </div>
+  <div class="grid-2">
+    <div class="chart-card"><h3><span class="dot" style="background:var(--green)"></span>Productivity BCM/Hr vs kWh/BCM</h3><div class="chart-wrap"><canvas id="chartProdVsKwh"></canvas></div></div>
+    <div class="chart-card"><h3><span class="dot" style="background:var(--blue)"></span>SMU Working Hours by Line</h3><div class="chart-wrap"><canvas id="chartOverviewSmu"></canvas></div></div>
+  </div>
+</div>
+
+<!-- PRODUCTION BY JOB -->
+<div class="content" id="tab-production_job">
+  <div class="section-title">Production by Job &mdash; Contract Overview</div>
+  <div class="grid-4" id="job-kpi"></div>
+  <div class="grid-2">
+    <div class="chart-card"><h3><span class="dot" style="background:var(--purple)"></span>JOB 1 &mdash; Contract vs Actual (BCM)</h3><div class="chart-wrap"><canvas id="chartJob1"></canvas></div></div>
+    <div class="chart-card"><h3><span class="dot" style="background:var(--blue)"></span>JOB 1 &mdash; Accumulative Progress</h3><div class="chart-wrap"><canvas id="chartJob1Acc"></canvas></div></div>
+  </div>
+  <div class="chart-card"><h3><span class="dot" style="background:var(--green)"></span>JOB 2 (Coal - TON) &amp; JOB 3 (BCM) Monthly</h3><div class="chart-wrap"><canvas id="chartJob23"></canvas></div></div>
+  <div class="chart-card"><h3>Detail Table &mdash; Production by Job</h3><div class="table-wrap"><table id="tableJob"></table></div></div>
+</div>
+
+<!-- PRODUCTION BY LINE -->
+<div class="content" id="tab-production_line">
+  <div class="section-title">Production by Conveyor Line &mdash; WA &middot; WB &middot; WN &middot; WE</div>
+  <div class="grid-4" id="line-kpi"></div>
+  <div class="grid-2">
+    <div class="chart-card"><h3><span class="dot" style="background:var(--wa)"></span>Conveyor Production Stacked (BCM)</h3><div class="chart-wrap"><canvas id="chartLineStack"></canvas></div></div>
+    <div class="chart-card"><h3><span class="dot" style="background:var(--orange)"></span>Excavation Source &mdash; EX2500 vs EX3600</h3><div class="chart-wrap"><canvas id="chartExcavation"></canvas></div></div>
+  </div>
+  <div class="grid-2">
+    <div class="chart-card"><h3><span class="dot" style="background:var(--red)"></span>Hauling &mdash; CAT777 vs CAT785</h3><div class="chart-wrap"><canvas id="chartHauling"></canvas></div></div>
+    <div class="chart-card"><h3><span class="dot" style="background:var(--teal)"></span>Line Share % (Pie)</h3><div class="chart-wrap"><canvas id="chartLinePie"></canvas></div></div>
+  </div>
+  <div class="chart-card"><h3>Detail Table &mdash; Production by Line</h3><div class="table-wrap"><table id="tableLine"></table></div></div>
+</div>
+
+<!-- SMU -->
+<div class="content" id="tab-smu">
+  <div class="section-title">SMU &mdash; Service Meter Unit (Working Hours)</div>
+  <div class="grid-4" id="smu-kpi"></div>
+  <div class="grid-2">
+    <div class="chart-card"><h3><span class="dot" style="background:var(--purple)"></span>Conveyor SMU Hours (WA &middot; WB &middot; WN)</h3><div class="chart-wrap"><canvas id="chartSmuConveyor"></canvas></div></div>
+    <div class="chart-card"><h3><span class="dot" style="background:var(--orange)"></span>Excavator SMU Hours</h3><div class="chart-wrap"><canvas id="chartSmuExcavator"></canvas></div></div>
+  </div>
+  <div class="chart-card"><h3><span class="dot" style="background:var(--green)"></span>Hauling Truck SMU Hours</h3><div class="chart-wrap"><canvas id="chartSmuTruck"></canvas></div></div>
+  <div class="chart-card"><h3>Detail Table &mdash; SMU</h3><div class="table-wrap"><table id="tableSmu"></table></div></div>
+</div>
+
+<!-- PRODUCTIVITY -->
+<div class="content" id="tab-productivity">
+  <div class="section-title">Productivity &mdash; BCM/Hr &amp; Consumption Analysis</div>
+  <div class="grid-4" id="prod-kpi"></div>
+  <div class="grid-2">
+    <div class="chart-card"><h3><span class="dot" style="background:var(--purple)"></span>Conveyor Productivity (BCM/Hr)</h3><div class="chart-wrap"><canvas id="chartProductivity"></canvas></div></div>
+    <div class="chart-card"><h3><span class="dot" style="background:var(--orange)"></span>kWh per BCM &mdash; Electricity Efficiency</h3><div class="chart-wrap"><canvas id="chartKwhPerBcm"></canvas></div></div>
+  </div>
+  <div class="grid-2">
+    <div class="chart-card"><h3><span class="dot" style="background:var(--green)"></span>Production vs kWh Correlation</h3><div class="chart-wrap"><canvas id="chartCorrelation"></canvas></div></div>
+    <div class="chart-card"><h3><span class="dot" style="background:var(--blue)"></span>Capacity Rated vs Actual %</h3><div class="chart-wrap"><canvas id="chartCapacity"></canvas></div></div>
+  </div>
+  <div class="chart-card"><h3>Detail Table &mdash; Productivity &amp; Consumption</h3><div class="table-wrap"><table id="tableProductivity"></table></div></div>
+</div>
+
+<!-- SETTINGS -->
+<div class="content" id="tab-settings">
+  <div class="section-title">Data Source Settings &mdash; Google Sheets / API</div>
+  <div class="chart-card">
+    <h3>Google Sheets Connection</h3>
+    <p style="font-size:.85rem;color:var(--sub);margin-bottom:12px">
+      Format URL: <code>https://docs.google.com/spreadsheets/d/{SHEET_ID}/</code><br>
+      Sheet must be shared as "Anyone with the link" (Viewer)
+    </p>
+    <div class="google-sheet-input">
+      <input id="sheetUrl" type="text" placeholder="Paste Google Sheets URL here...">
+      <button onclick="connectSheet()">Connect</button>
+    </div>
+    <div class="google-sheet-input">
+      <input id="sheetName" type="text" placeholder="Sheet name" value="Sheet1">
+      <select id="sheetTarget" style="padding:8px;border-radius:8px;border:1px solid #d1d5db">
+        <option value="production_line">Production by Line</option>
+        <option value="smu">SMU</option>
+        <option value="kwh">kWh</option>
+        <option value="productivity">Productivity</option>
+        <option value="production_job">Production by Job</option>
+      </select>
+    </div>
+    <div id="sheetStatus" style="margin-top:10px;font-size:.85rem"></div>
+  </div>
+  <div class="chart-card">
+    <h3>External API Connection</h3>
+    <div class="google-sheet-input">
+      <input id="apiUrl" type="text" placeholder="API endpoint URL (JSON format)">
+      <button onclick="connectApi()">Connect API</button>
+    </div>
+    <div id="apiStatus" style="margin-top:10px;font-size:.85rem"></div>
+  </div>
+  <div class="chart-card">
+    <h3>Auto-Refresh Settings</h3>
+    <div style="display:flex;align-items:center;gap:15px;margin-top:10px">
+      <label style="font-size:.85rem"><input type="checkbox" id="autoRefresh" checked> Auto-refresh</label>
+      <select id="refreshInterval" style="padding:6px;border-radius:6px;border:1px solid #d1d5db">
+        <option value="30">30 sec</option>
+        <option value="60" selected>1 min</option>
+        <option value="300">5 min</option>
+        <option value="600">10 min</option>
+      </select>
+      <span id="lastUpdate" style="font-size:.75rem;color:var(--sub)"></span>
+    </div>
+  </div>
+</div>
+
+<div class="footer">
+  OB9 Conveyor System Dashboard &middot; Mae Moh Mine &middot; Updated: <span id="footerDate"></span> &middot; Powered by Google Sheets API
+</div>
+
+<script>
+const MONTHS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const C={wa:'#7c3aed',wb:'#2563eb',we:'#f59e0b',wn:'#10b981',ex2500:'#f97316',ex3600:'#ef4444',cat777:'#06b6d4',cat785:'#8b5cf6'};
+let charts={},DATA={},googleSheetId=null,refreshTimer=null;
+
+const EMBEDDED_DATA={"2025":{
+production_line:[
+{month:"2025-01",WA:2192404,WB:1271626,WE:0,WN:162225,SUB_CON:1712556,EX2500:201044,EX3600:1467441,CAT777:4210,CAT785:1664275,calendar:3626255,payment:4212766},
+{month:"2025-02",WA:1707180,WB:694551,WE:0,WN:202647,SUB_CON:1180454,EX2500:195465,EX3600:1048216,CAT777:13634,CAT785:1230047,calendar:2604378,payment:2836224},
+{month:"2025-03",WA:2361423,WB:647927,WE:0,WN:770032,SUB_CON:1951608,EX2500:110055,EX3600:1513463,CAT777:934,CAT785:1622584,calendar:3779382,payment:3290996},
+{month:"2025-04",WA:1840163,WB:1167994,WE:0,WN:394694,SUB_CON:1609310,EX2500:177210,EX3600:1444455,CAT777:0,CAT785:1621665,calendar:3402851,payment:3337708},
+{month:"2025-05",WA:1563090,WB:1028523,WE:0,WN:408755,SUB_CON:1498755,EX2500:200511,EX3600:1186219,CAT777:2210,CAT785:1384520,calendar:3000368,payment:3601843},
+{month:"2025-06",WA:1826127,WB:1047633,WE:0,WN:543898,SUB_CON:1778585,EX2500:113718,EX3600:1329669,CAT777:2159,CAT785:1441228,calendar:3417658,payment:3240807},
+{month:"2025-07",WA:1317461,WB:854903,WE:0,WN:283504,SUB_CON:1120642,EX2500:70473,EX3600:1158258,CAT777:0,CAT785:1228731,calendar:2455868,payment:2162716},
+{month:"2025-08",WA:1401806,WB:1228715,WE:0,WN:251887,SUB_CON:1302765,EX2500:59879,EX3600:1442677,CAT777:17703,CAT785:1484853,calendar:2882408,payment:2997027},
+{month:"2025-09",WA:1456663,WB:1026154,WE:0,WN:336377,SUB_CON:1400721,EX2500:164362,EX3600:1170425,CAT777:60828,CAT785:1273959,calendar:2819194,payment:2616591},
+{month:"2025-10",WA:1080308,WB:1124103,WE:0,WN:129379,SUB_CON:874584,EX2500:117727,EX3600:1277948,CAT777:41469,CAT785:1354206,calendar:2333790,payment:1536735}
+],
+smu:[
+{month:"2025-01",WA:586.69,WB:546.08,WE:0,WN:96.41,EX2500_total:427.3,EX3600_total:2098.4,CAT777:29.8,CAT785:7281.7},
+{month:"2025-02",WA:493.99,WB:295.92,WE:0,WN:126.95,EX2500_total:398,EX3600_total:1384.4,CAT777:100.7,CAT785:5261.3},
+{month:"2025-03",WA:576.73,WB:250.66,WE:0,WN:459.88,EX2500_total:403.4,EX3600_total:2265.3,CAT777:8.7,CAT785:7605.2},
+{month:"2025-04",WA:513.25,WB:402.02,WE:0,WN:206.5,EX2500_total:299.3,EX3600_total:1833.6,CAT777:0,CAT785:7210},
+{month:"2025-05",WA:484.16,WB:353.27,WE:0,WN:208,EX2500_total:434.5,EX3600_total:1452.3,CAT777:23.6,CAT785:6498.5},
+{month:"2025-06",WA:484.37,WB:385.51,WE:0,WN:310.2,EX2500_total:302.2,EX3600_total:1732.8,CAT777:13.5,CAT785:7301.1},
+{month:"2025-07",WA:410.38,WB:382.07,WE:0,WN:162.49,EX2500_total:204.3,EX3600_total:1531.6,CAT777:19.1,CAT785:5756},
+{month:"2025-08",WA:425.83,WB:408.68,WE:0,WN:164.06,EX2500_total:258.2,EX3600_total:1664.4,CAT777:211.2,CAT785:6659.4},
+{month:"2025-09",WA:454.33,WB:416.19,WE:0,WN:197.56,EX2500_total:346.5,EX3600_total:1430.1,CAT777:505.6,CAT785:6484.1},
+{month:"2025-10",WA:436.68,WB:478.51,WE:0,WN:110.37,EX2500_total:219.2,EX3600_total:1691.7,CAT777:386.3,CAT785:7553.2}
+],
+kwh:[
+{month:"2025-01",WA:17552255,WB:10352243,WE:0,WN:1104605,total:29009103},
+{month:"2025-02",WA:13191273,WB:5304997,WE:0,WN:1337109,total:19833379},
+{month:"2025-03",WA:18094822,WB:4619532,WE:0,WN:4894400,total:27608754},
+{month:"2025-04",WA:15477158,WB:8299683,WE:0,WN:2253957,total:26030798},
+{month:"2025-05",WA:13309496,WB:7357089,WE:0,WN:2406444,total:23073029},
+{month:"2025-06",WA:16032326,WB:7562986,WE:0,WN:3270546,total:26865858},
+{month:"2025-07",WA:11712987,WB:6890185,WE:0,WN:1688881,total:20292053},
+{month:"2025-08",WA:15279511,WB:8682881,WE:0,WN:1589689,total:25552081},
+{month:"2025-09",WA:11802683,WB:7336516,WE:0,WN:1808720,total:20947919},
+{month:"2025-10",WA:9722774,WB:8748670,WE:0,WN:937468,total:19408913}
+],
+productivity:[
+{month:"2025-01",WA:3736.9,WB:2328.6,WE:0,WN:1682.7,EX3600:470.5},
+{month:"2025-02",WA:3455.9,WB:2347.1,WE:0,WN:1596.3,EX3600:491.1},
+{month:"2025-03",WA:4094.5,WB:2584.9,WE:0,WN:1674.4,EX3600:272.8},
+{month:"2025-04",WA:3585.3,WB:2905.3,WE:0,WN:1911.4,EX3600:592.1},
+{month:"2025-05",WA:3228.5,WB:2911.4,WE:0,WN:1965.2,EX3600:461.5},
+{month:"2025-06",WA:3770.1,WB:2717.5,WE:0,WN:1753.4,EX3600:376.3},
+{month:"2025-07",WA:3210.3,WB:2237.6,WE:0,WN:1744.7,EX3600:344.9},
+{month:"2025-08",WA:3291.9,WB:3006.5,WE:0,WN:1535.3,EX3600:231.9},
+{month:"2025-09",WA:3206.2,WB:2465.6,WE:0,WN:1702.7,EX3600:474.3},
+{month:"2025-10",WA:2473.9,WB:2349.2,WE:0,WN:1172.2,EX3600:537.1}
+],
+production_job:[
+{month:"2025-01",job1_contract:4399000,job1_actual:2997027,job1_acc_contract:304923000,job1_acc_actual:248093692,job1_pct:0.8136,job2_actual:442073,job3_actual:144118},
+{month:"2025-02",job1_contract:4335400,job1_actual:2616591,job1_acc_contract:309258400,job1_acc_actual:250710283,job1_pct:0.8107,job2_actual:476414,job3_actual:218624},
+{month:"2025-03",job1_contract:4950200,job1_actual:1536735,job1_acc_contract:314208600,job1_acc_actual:252247018,job1_pct:0.8028,job2_actual:476589,job3_actual:304672},
+{month:"2025-04",job1_contract:5077400,job1_actual:0,job1_acc_contract:319286000,job1_acc_actual:252247018,job1_pct:0.79,job2_actual:265142,job3_actual:0},
+{month:"2025-05",job1_contract:5013800,job1_actual:0,job1_acc_contract:324299800,job1_acc_actual:252247018,job1_pct:0.7778,job2_actual:250049,job3_actual:0},
+{month:"2025-06",job1_contract:4314200,job1_actual:0,job1_acc_contract:328614000,job1_acc_actual:252247018,job1_pct:0.7676,job2_actual:154765,job3_actual:0},
+{month:"2025-07",job1_contract:4314200,job1_actual:0,job1_acc_contract:332928200,job1_acc_actual:252247018,job1_pct:0.7577,job2_actual:226945,job3_actual:0},
+{month:"2025-08",job1_contract:4918400,job1_actual:0,job1_acc_contract:337846600,job1_acc_actual:252247018,job1_pct:0.7466,job2_actual:295466,job3_actual:0},
+{month:"2025-09",job1_contract:3466200,job1_actual:0,job1_acc_contract:341312800,job1_acc_actual:252247018,job1_pct:0.739,job2_actual:312477,job3_actual:0},
+{month:"2025-10",job1_contract:4134000,job1_actual:0,job1_acc_contract:345446800,job1_acc_actual:252247018,job1_pct:0.7302,job2_actual:0,job3_actual:0}
+]}};
+
+function init(){
+  DATA=EMBEDDED_DATA;
+  document.getElementById('footerDate').textContent=new Date().toLocaleString('th-TH');
+  document.getElementById('lastUpdate').textContent='Last: '+new Date().toLocaleTimeString();
+  renderAll();
+  setupAutoRefresh();
+  document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',function(){
+    document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+    document.querySelectorAll('.content').forEach(x=>x.classList.remove('active'));
+    this.classList.add('active');
+    document.getElementById('tab-'+this.dataset.tab).classList.add('active');
+  }));
+}
+
+function getYear(){return document.getElementById('yearSelect').value}
+function getD(){return DATA[getYear()]||DATA['2025']}
+function fmt(n){if(!n||n===0)return'0';const v=typeof n==='string'?parseFloat(n):n;return v.toLocaleString('en-US',{maximumFractionDigits:0})}
+function fmtTick(v){return v>=1e6?(v/1e6).toFixed(1)+'M':v>=1e3?(v/1e3).toFixed(0)+'k':v}
+
+function renderAll(){
+  const d=getD();if(!d)return;
+  renderKPI(d);renderOverviewCharts(d);renderJobTab(d);renderLineTab(d);renderSmuTab(d);renderProductivityTab(d);
+}
+
+function kpiHtml(cards){
+  return cards.map(c=>`<div class="kpi"><div class="accent" style="background:${c.color}"></div>
+    <div class="label">${c.label}</div><div class="value">${c.value}</div>
+    ${c.delta?`<div class="delta ${c.up?'up':'down'}">${c.up?'&#9650;':'&#9660;'} ${c.delta}</div>`:''}</div>`).join('');
+}
+
+function renderKPI(d){
+  const pl=d.production_line,kw=d.kwh,pr=d.productivity;
+  const totalProd=pl.reduce((s,r)=>s+r.calendar,0);
+  const totalKwh=kw.reduce((s,r)=>s+r.total,0);
+  const avgWA=pr.reduce((s,r)=>s+r.WA,0)/pr.length;
+  const kwhBcm=totalKwh/totalProd;
+  const last=pl[pl.length-1],prev=pl[pl.length-2]||last;
+  const delta=((last.calendar-prev.calendar)/prev.calendar*100).toFixed(1);
+  document.getElementById('kpi-cards').innerHTML=kpiHtml([
+    {label:'Total Production (BCM)',value:fmt(totalProd),color:'var(--purple)',delta:delta+'% vs prev',up:delta>0},
+    {label:'Total kWh Consumption',value:fmt(totalKwh),color:'var(--orange)',delta:kwhBcm.toFixed(2)+' kWh/BCM',up:false},
+    {label:'Avg Productivity WA (BCM/Hr)',value:fmt(avgWA.toFixed(0)),color:'var(--green)',delta:'Rated: 5,500',up:true},
+    {label:'Latest Production',value:fmt(last.calendar),color:'var(--cyan)',delta:last.month,up:true},
+    {label:'WA Share (Latest)',value:((last.WA/last.calendar)*100).toFixed(1)+'%',color:'var(--wa)',delta:fmt(last.WA)+' BCM',up:true},
+    {label:'WB Share (Latest)',value:((last.WB/last.calendar)*100).toFixed(1)+'%',color:'var(--wb)',delta:fmt(last.WB)+' BCM',up:true},
+    {label:'Latest kWh',value:fmt(kw[kw.length-1].total),color:'var(--red)',delta:kw[kw.length-1].month,up:false},
+    {label:'Months with Data',value:pl.length,color:'var(--blue)'}
+  ]);
+}
+
+function makeChart(id,type,labels,datasets,opts={}){
+  if(charts[id])charts[id].destroy();
+  const ctx=document.getElementById(id);if(!ctx)return;
+  const cfg={type,data:{labels,datasets},options:{responsive:true,maintainAspectRatio:false,
+    interaction:{intersect:false,mode:'index'},
+    plugins:{legend:{position:'bottom',labels:{usePointStyle:true,padding:12,font:{size:11}}}},scales:{}}};
+  if(type!=='doughnut'&&type!=='pie'){
+    cfg.options.scales.x={grid:{display:false},stacked:!!opts.stacked};
+    cfg.options.scales.y={stacked:!!opts.stacked,title:{display:!!opts.yTitle,text:opts.yTitle||''},ticks:{callback:fmtTick}};
+    if(opts.dualAxis)cfg.options.scales.y1={position:'right',title:{display:true,text:opts.y1Title||''},grid:{drawOnChartArea:false}};
+  }
+  charts[id]=new Chart(ctx,cfg);
+}
+
+function renderOverviewCharts(d){
+  const lbl=d.production_line.map(r=>MONTHS[parseInt(r.month.split('-')[1])-1]);
+  makeChart('chartOverviewProd','bar',lbl,[
+    {label:'WA (BW2200)',data:d.production_line.map(r=>r.WA),backgroundColor:C.wa+'cc'},
+    {label:'WB (BW2000)',data:d.production_line.map(r=>r.WB),backgroundColor:C.wb+'cc'},
+    {label:'WN (BW1800)',data:d.production_line.map(r=>r.WN),backgroundColor:C.wn+'cc'}
+  ],{stacked:true,yTitle:'BCM'});
+  makeChart('chartOverviewKwh','bar',lbl,[
+    {label:'WA',data:d.kwh.map(r=>r.WA),backgroundColor:C.wa+'cc'},
+    {label:'WB',data:d.kwh.map(r=>r.WB),backgroundColor:C.wb+'cc'},
+    {label:'WN',data:d.kwh.map(r=>r.WN),backgroundColor:C.wn+'cc'}
+  ],{stacked:true,yTitle:'kWh'});
+  const kwhBcm=d.kwh.map((r,i)=>{const p=d.production_line[i].calendar;return p>0?(r.total/p).toFixed(2):0});
+  makeChart('chartProdVsKwh','bar',lbl,[
+    {label:'Productivity WA (BCM/Hr)',data:d.productivity.map(r=>r.WA),backgroundColor:C.wa+'88',yAxisID:'y'},
+    {label:'kWh/BCM',data:kwhBcm,type:'line',borderColor:C.ex3600,backgroundColor:C.ex3600+'33',yAxisID:'y1',tension:.3,pointRadius:4}
+  ],{dualAxis:true,y1Title:'kWh/BCM',yTitle:'BCM/Hr'});
+  makeChart('chartOverviewSmu','line',lbl,[
+    {label:'WA',data:d.smu.map(r=>r.WA),borderColor:C.wa,backgroundColor:C.wa+'22',fill:true,tension:.3},
+    {label:'WB',data:d.smu.map(r=>r.WB),borderColor:C.wb,backgroundColor:C.wb+'22',fill:true,tension:.3},
+    {label:'WN',data:d.smu.map(r=>r.WN),borderColor:C.wn,backgroundColor:C.wn+'22',fill:true,tension:.3}
+  ],{yTitle:'Hours'});
+}
+
+function renderJobTab(d){
+  const pj=d.production_job,lbl=pj.map(r=>MONTHS[parseInt(r.month.split('-')[1])-1]);
+  const totA=pj.reduce((s,r)=>s+(r.job1_actual||0),0),totC=pj.reduce((s,r)=>s+r.job1_contract,0);
+  document.getElementById('job-kpi').innerHTML=kpiHtml([
+    {label:'JOB 1 Actual YTD',value:fmt(totA)+' BCM',color:'var(--purple)'},
+    {label:'JOB 1 Contract YTD',value:fmt(totC)+' BCM',color:'var(--blue)'},
+    {label:'Acc. Progress',value:(pj[pj.length-1].job1_pct*100).toFixed(1)+'%',color:'var(--green)'},
+    {label:'JOB 2 Coal YTD',value:fmt(pj.reduce((s,r)=>s+(r.job2_actual||0),0))+' TON',color:'var(--orange)'}
+  ]);
+  makeChart('chartJob1','bar',lbl,[
+    {label:'Contract',data:pj.map(r=>r.job1_contract),backgroundColor:'#c4b5fd'},
+    {label:'Actual',data:pj.map(r=>r.job1_actual),backgroundColor:C.wa}
+  ],{yTitle:'BCM'});
+  makeChart('chartJob1Acc','line',lbl,[
+    {label:'ACC Contract',data:pj.map(r=>r.job1_acc_contract),borderColor:C.wb,tension:.3,pointRadius:4},
+    {label:'ACC Actual',data:pj.map(r=>r.job1_acc_actual),borderColor:C.wa,tension:.3,pointRadius:4}
+  ],{yTitle:'BCM'});
+  makeChart('chartJob23','bar',lbl,[
+    {label:'JOB 2 Coal (TON)',data:pj.map(r=>r.job2_actual||0),backgroundColor:C.cat777+'cc'},
+    {label:'JOB 3 (BCM)',data:pj.map(r=>r.job3_actual||0),backgroundColor:C.wn+'cc'}
+  ],{yTitle:'TON / BCM'});
+  let h='<thead><tr><th>Month</th><th>JOB1 Contract</th><th>JOB1 Actual</th><th>Progress %</th><th>JOB2 Coal</th><th>JOB3</th></tr></thead><tbody>';
+  pj.forEach(r=>{h+=`<tr><td>${r.month}</td><td>${fmt(r.job1_contract)}</td><td>${fmt(r.job1_actual)}</td><td>${(r.job1_pct*100).toFixed(1)}%</td><td>${fmt(r.job2_actual||0)}</td><td>${fmt(r.job3_actual||0)}</td></tr>`});
+  document.getElementById('tableJob').innerHTML=h+'</tbody>';
+}
+
+function renderLineTab(d){
+  const pl=d.production_line,lbl=pl.map(r=>MONTHS[parseInt(r.month.split('-')[1])-1]);
+  const tWA=pl.reduce((s,r)=>s+r.WA,0),tWB=pl.reduce((s,r)=>s+r.WB,0),tWN=pl.reduce((s,r)=>s+r.WN,0),tWE=pl.reduce((s,r)=>s+r.WE,0);
+  document.getElementById('line-kpi').innerHTML=kpiHtml([
+    {label:'WA (BW2200)',value:fmt(tWA)+' BCM',color:'var(--wa)'},
+    {label:'WB (BW2000)',value:fmt(tWB)+' BCM',color:'var(--wb)'},
+    {label:'WN (BW1800)',value:fmt(tWN)+' BCM',color:'var(--wn)'},
+    {label:'WE Extra (BW1800)',value:fmt(tWE)+' BCM',color:'var(--we)'}
+  ]);
+  makeChart('chartLineStack','bar',lbl,[
+    {label:'WA',data:pl.map(r=>r.WA),backgroundColor:C.wa+'cc'},
+    {label:'WB',data:pl.map(r=>r.WB),backgroundColor:C.wb+'cc'},
+    {label:'WN',data:pl.map(r=>r.WN),backgroundColor:C.wn+'cc'},
+    {label:'WE',data:pl.map(r=>r.WE),backgroundColor:C.we+'cc'}
+  ],{stacked:true,yTitle:'BCM'});
+  makeChart('chartExcavation','bar',lbl,[
+    {label:'EX2500',data:pl.map(r=>r.EX2500),backgroundColor:C.ex2500+'cc'},
+    {label:'EX3600',data:pl.map(r=>r.EX3600),backgroundColor:C.ex3600+'cc'}
+  ],{yTitle:'BCM'});
+  makeChart('chartHauling','bar',lbl,[
+    {label:'CAT777 (100T)',data:pl.map(r=>r.CAT777),backgroundColor:C.cat777+'cc'},
+    {label:'CAT785 (150T)',data:pl.map(r=>r.CAT785),backgroundColor:C.cat785+'cc'}
+  ],{yTitle:'BCM'});
+  makeChart('chartLinePie','doughnut',['WA','WB','WN','WE'],[{data:[tWA,tWB,tWN,tWE],backgroundColor:[C.wa,C.wb,C.wn,C.we],borderWidth:2,borderColor:'#fff'}],{});
+  let h='<thead><tr><th>Month</th><th>Calendar</th><th>WA</th><th>WB</th><th>WN</th><th>WE</th><th>EX2500</th><th>EX3600</th><th>CAT777</th><th>CAT785</th></tr></thead><tbody>';
+  pl.forEach(r=>{h+=`<tr><td>${r.month}</td><td>${fmt(r.calendar)}</td><td>${fmt(r.WA)}</td><td>${fmt(r.WB)}</td><td>${fmt(r.WN)}</td><td>${fmt(r.WE)}</td><td>${fmt(r.EX2500)}</td><td>${fmt(r.EX3600)}</td><td>${fmt(r.CAT777)}</td><td>${fmt(r.CAT785)}</td></tr>`});
+  document.getElementById('tableLine').innerHTML=h+'</tbody>';
+}
+
+function renderSmuTab(d){
+  const sm=d.smu,lbl=sm.map(r=>MONTHS[parseInt(r.month.split('-')[1])-1]);
+  document.getElementById('smu-kpi').innerHTML=kpiHtml([
+    {label:'Total WA Hours',value:fmt(sm.reduce((s,r)=>s+r.WA,0).toFixed(0))+' Hr',color:'var(--wa)'},
+    {label:'Total WB Hours',value:fmt(sm.reduce((s,r)=>s+r.WB,0).toFixed(0))+' Hr',color:'var(--wb)'},
+    {label:'Total EX2500 Hours',value:fmt(sm.reduce((s,r)=>s+r.EX2500_total,0).toFixed(0))+' Hr',color:'var(--orange)'},
+    {label:'Total EX3600 Hours',value:fmt(sm.reduce((s,r)=>s+r.EX3600_total,0).toFixed(0))+' Hr',color:'var(--red)'}
+  ]);
+  makeChart('chartSmuConveyor','line',lbl,[
+    {label:'WA',data:sm.map(r=>r.WA),borderColor:C.wa,tension:.3,pointRadius:4},
+    {label:'WB',data:sm.map(r=>r.WB),borderColor:C.wb,tension:.3,pointRadius:4},
+    {label:'WN',data:sm.map(r=>r.WN),borderColor:C.wn,tension:.3,pointRadius:4}
+  ],{yTitle:'Hours'});
+  makeChart('chartSmuExcavator','bar',lbl,[
+    {label:'EX2500',data:sm.map(r=>r.EX2500_total),backgroundColor:C.ex2500+'cc'},
+    {label:'EX3600',data:sm.map(r=>r.EX3600_total),backgroundColor:C.ex3600+'cc'}
+  ],{yTitle:'Hours'});
+  makeChart('chartSmuTruck','bar',lbl,[
+    {label:'CAT777',data:sm.map(r=>r.CAT777),backgroundColor:C.cat777+'cc'},
+    {label:'CAT785',data:sm.map(r=>r.CAT785),backgroundColor:C.cat785+'cc'}
+  ],{yTitle:'Hours'});
+  let h='<thead><tr><th>Month</th><th>WA</th><th>WB</th><th>WN</th><th>EX2500</th><th>EX3600</th><th>CAT777</th><th>CAT785</th></tr></thead><tbody>';
+  sm.forEach(r=>{h+=`<tr><td>${r.month}</td><td>${r.WA.toFixed(1)}</td><td>${r.WB.toFixed(1)}</td><td>${r.WN.toFixed(1)}</td><td>${r.EX2500_total.toFixed(1)}</td><td>${r.EX3600_total.toFixed(1)}</td><td>${r.CAT777.toFixed(1)}</td><td>${r.CAT785.toFixed(1)}</td></tr>`});
+  document.getElementById('tableSmu').innerHTML=h+'</tbody>';
+}
+
+function renderProductivityTab(d){
+  const pr=d.productivity,kw=d.kwh,pl=d.production_line;
+  const lbl=pr.map(r=>MONTHS[parseInt(r.month.split('-')[1])-1]);
+  const avgWA=pr.reduce((s,r)=>s+r.WA,0)/pr.length,avgWB=pr.reduce((s,r)=>s+r.WB,0)/pr.length;
+  document.getElementById('prod-kpi').innerHTML=kpiHtml([
+    {label:'Avg WA (BCM/Hr)',value:avgWA.toFixed(0),color:'var(--wa)',delta:'Rated: 5,500',up:true},
+    {label:'Avg WB (BCM/Hr)',value:avgWB.toFixed(0),color:'var(--wb)',delta:'Rated: 4,500',up:true},
+    {label:'WA Utilization',value:((avgWA/5500)*100).toFixed(1)+'%',color:'var(--green)'},
+    {label:'WB Utilization',value:((avgWB/4500)*100).toFixed(1)+'%',color:'var(--blue)'}
+  ]);
+  makeChart('chartProductivity','line',lbl,[
+    {label:'WA (Rated: 5,500)',data:pr.map(r=>r.WA),borderColor:C.wa,tension:.3,pointRadius:5,borderWidth:3},
+    {label:'WB (Rated: 4,500)',data:pr.map(r=>r.WB),borderColor:C.wb,tension:.3,pointRadius:5,borderWidth:3},
+    {label:'WN (Rated: 3,000)',data:pr.map(r=>r.WN),borderColor:C.wn,tension:.3,pointRadius:5,borderWidth:3}
+  ],{yTitle:'BCM/Hr'});
+  const kwBcmWA=kw.map((r,i)=>pl[i].WA>0?(r.WA/pl[i].WA).toFixed(2):0);
+  const kwBcmWB=kw.map((r,i)=>pl[i].WB>0?(r.WB/pl[i].WB).toFixed(2):0);
+  makeChart('chartKwhPerBcm','line',lbl,[
+    {label:'WA kWh/BCM',data:kwBcmWA,borderColor:C.wa,tension:.3,pointRadius:5},
+    {label:'WB kWh/BCM',data:kwBcmWB,borderColor:C.wb,tension:.3,pointRadius:5}
+  ],{yTitle:'kWh/BCM'});
+  makeChart('chartCorrelation','bar',lbl,[
+    {label:'Production (x100k BCM)',data:pl.map(r=>(r.calendar/1e5).toFixed(1)),backgroundColor:C.wa+'88',yAxisID:'y'},
+    {label:'kWh (x1M)',data:kw.map(r=>(r.total/1e6).toFixed(1)),type:'line',borderColor:C.ex3600,yAxisID:'y1',tension:.3,pointRadius:4}
+  ],{dualAxis:true,yTitle:'BCM (x100k)',y1Title:'kWh (x1M)'});
+  const capWA=pr.map(r=>r.WA>0?((r.WA/5500)*100).toFixed(1):0);
+  const capWB=pr.map(r=>r.WB>0?((r.WB/4500)*100).toFixed(1):0);
+  makeChart('chartCapacity','bar',lbl,[
+    {label:'WA % of Rated',data:capWA,backgroundColor:C.wa+'aa'},
+    {label:'WB % of Rated',data:capWB,backgroundColor:C.wb+'aa'}
+  ],{yTitle:'% Capacity'});
+  let h='<thead><tr><th>Month</th><th>WA BCM/Hr</th><th>WB BCM/Hr</th><th>WN BCM/Hr</th><th>WA kWh/BCM</th><th>WB kWh/BCM</th><th>Total kWh</th><th>WA %Cap</th><th>WB %Cap</th></tr></thead><tbody>';
+  pr.forEach((r,i)=>{h+=`<tr><td>${r.month}</td><td>${r.WA.toFixed(0)}</td><td>${r.WB.toFixed(0)}</td><td>${r.WN.toFixed(0)}</td><td>${kwBcmWA[i]}</td><td>${kwBcmWB[i]}</td><td>${fmt(kw[i].total)}</td><td>${capWA[i]}%</td><td>${capWB[i]}%</td></tr>`});
+  document.getElementById('tableProductivity').innerHTML=h+'</tbody>';
+}
+
+function connectSheet(){
+  const url=document.getElementById('sheetUrl').value.trim();
+  const m=url.match(/\/d\/([a-zA-Z0-9_-]+)/);
+  if(!m){document.getElementById('sheetStatus').innerHTML='<span style="color:red">Invalid URL</span>';return}
+  googleSheetId=m[1];
+  localStorage.setItem('ob9_sheet_id',googleSheetId);
+  localStorage.setItem('ob9_sheet_name',document.getElementById('sheetName').value);
+  document.getElementById('sheetStatus').innerHTML='<span style="color:green">Connected! ID: '+googleSheetId+'</span>';
+  fetchGoogleSheet();
+}
+
+async function fetchGoogleSheet(){
+  if(!googleSheetId)return;
+  const name=localStorage.getItem('ob9_sheet_name')||'Sheet1';
+  try{
+    const res=await fetch(`https://docs.google.com/spreadsheets/d/${googleSheetId}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(name)}`);
+    const txt=await res.text();
+    const json=JSON.parse(txt.match(/google\.visualization\.Query\.setResponse\(([\s\S]+)\)/)[1]);
+    document.getElementById('sheetStatus').innerHTML=`<span style="color:green">Fetched ${json.table.rows.length} rows</span>`;
+    document.getElementById('lastUpdate').textContent='Last: '+new Date().toLocaleTimeString();
+  }catch(e){
+    document.getElementById('sheetStatus').innerHTML=`<span style="color:red">Error: ${e.message}</span>`;
+  }
+}
+
+function connectApi(){
+  const url=document.getElementById('apiUrl').value.trim();
+  if(!url){document.getElementById('apiStatus').innerHTML='<span style="color:red">Enter URL</span>';return}
+  localStorage.setItem('ob9_api_url',url);
+  fetchApi(url);
+}
+
+async function fetchApi(url){
+  try{
+    const json=await(await fetch(url)).json();
+    if(json.production_line)DATA[getYear()]=json;
+    renderAll();
+    document.getElementById('apiStatus').innerHTML='<span style="color:green">API connected</span>';
+  }catch(e){
+    document.getElementById('apiStatus').innerHTML=`<span style="color:red">${e.message}</span>`;
+  }
+}
+
+function refreshData(){
+  if(googleSheetId)fetchGoogleSheet();
+  const api=localStorage.getItem('ob9_api_url');
+  if(api)fetchApi(api);
+  document.getElementById('footerDate').textContent=new Date().toLocaleString('th-TH');
+  document.getElementById('lastUpdate').textContent='Last: '+new Date().toLocaleTimeString();
+  renderAll();
+}
+
+function setupAutoRefresh(){
+  const saved=localStorage.getItem('ob9_sheet_id');
+  if(saved)googleSheetId=saved;
+  if(refreshTimer)clearInterval(refreshTimer);
+  const sec=parseInt(document.getElementById('refreshInterval').value)*1000;
+  if(document.getElementById('autoRefresh').checked)refreshTimer=setInterval(refreshData,sec);
+}
+
+document.getElementById('refreshInterval').addEventListener('change',setupAutoRefresh);
+document.getElementById('autoRefresh').addEventListener('change',setupAutoRefresh);
+document.getElementById('yearSelect').addEventListener('change',renderAll);
+
+init();
+</script>
+</body>
+</html>
