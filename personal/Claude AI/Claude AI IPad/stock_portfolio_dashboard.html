@@ -32,22 +32,28 @@
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{
-  --bg:#eef1f6;--card:#fff;--text:#111827;--sub:#6b7280;--line:#e5e7eb;
-  --shadow:0 2px 14px rgba(17,24,39,.08);
-  --gain:#16a34a;--loss:#dc2626;--amber:#d97706;
-  /* validated categorical palette (dataviz) */
-  --s-bank:#2a78d6;--s-energy:#1baf7a;--s-infra:#eda100;--s-health:#e34948;
-  --s-comm:#4a3aa7;--s-insur:#e87ba4;--s-prop:#eb6834;--s-serv:#008300;
-  --accent:#0f766e;--accent2:#115e59;
+  --bg:#e8eaef;--bg2:#f5f6f9;--card:#fff;--text:#242a38;--sub:#7c8395;--line:#e8eaf0;
+  --shadow:0 6px 22px rgba(45,55,85,.10);
+  --gain:#1f9d55;--loss:#e02424;--amber:#e08e0b;
+  /* sector palette — reference-inspired, CVD-validated (worst adjacent ΔE 13.6) */
+  --s-bank:#2E7BC4;--s-energy:#12A69A;--s-infra:#F39C12;--s-health:#D81B60;
+  --s-comm:#6A3FA0;--s-insur:#EC407A;--s-prop:#E4572E;--s-serv:#43A047;
+  /* 5 hero gradient stops from the reference infographic */
+  --g1a:#F5A623;--g1b:#F6C24D;  /* orange  */
+  --g2a:#D6236A;--g2b:#EC5A8B;  /* magenta */
+  --g3a:#5B2A86;--g3b:#8256B0;  /* purple  */
+  --g4a:#2E6FB5;--g4b:#4E97D8;  /* blue    */
+  --g5a:#12A69A;--g5b:#37C9A9;  /* teal    */
+  --accent:#2E6FB5;--accent2:#255c98;
 }
 html{-webkit-text-size-adjust:100%}
-body{font-family:'Segoe UI',Tahoma,'Sarabun',sans-serif;background:var(--bg);color:var(--text);line-height:1.5;-webkit-text-size-adjust:100%;overflow-x:hidden;padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right)}
-button,input,select,textarea{-webkit-tap-highlight-color:rgba(15,118,110,.15)}
-.header{background:linear-gradient(135deg,#064e3b,#0f766e,#0e7490);color:#fff;padding:18px 26px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px}
-.header h1{font-size:1.4rem;font-weight:800;letter-spacing:.3px}
-.header .sub{font-size:.72rem;color:#a7f3d0;letter-spacing:1.5px;margin-top:2px}
+body{font-family:'Segoe UI',Tahoma,'Sarabun',sans-serif;background:linear-gradient(160deg,var(--bg),var(--bg2));background-attachment:fixed;color:var(--text);line-height:1.5;-webkit-text-size-adjust:100%;overflow-x:hidden;padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right)}
+button,input,select,textarea{-webkit-tap-highlight-color:rgba(46,111,181,.15)}
+.header{background:linear-gradient(90deg,var(--g1a),var(--g2a) 26%,var(--g3a) 52%,var(--g4a) 76%,var(--g5a));color:#fff;padding:18px 26px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;box-shadow:0 4px 18px rgba(45,55,85,.18)}
+.header h1{font-size:1.4rem;font-weight:800;letter-spacing:.3px;text-shadow:0 1px 3px rgba(0,0,0,.18)}
+.header .sub{font-size:.72rem;color:rgba(255,255,255,.9);letter-spacing:1.5px;margin-top:2px}
 .header-right{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-.header-right .as-of{font-size:.75rem;color:#ccfbf1;text-align:right}
+.header-right .as-of{font-size:.75rem;color:rgba(255,255,255,.9);text-align:right}
 .header-right .as-of b{color:#fff;font-size:.9rem}
 .tabs{display:flex;background:#fff;border-bottom:2px solid var(--line);padding:0 16px;overflow-x:auto;-webkit-overflow-scrolling:touch;position:sticky;top:0;z-index:20}
 .tab{padding:14px 20px;cursor:pointer;font-weight:700;font-size:.9rem;color:var(--sub);border-bottom:3px solid transparent;white-space:nowrap;transition:.15s}
@@ -57,28 +63,28 @@ button,input,select,textarea{-webkit-tap-highlight-color:rgba(15,118,110,.15)}
 .content.active{display:block}
 
 /* Vision hero card */
-.vision{background:linear-gradient(135deg,#0f766e,#115e59 55%,#134e4a);color:#fff;border-radius:18px;padding:22px 24px;box-shadow:var(--shadow);margin-bottom:20px;position:relative;overflow:hidden}
-.vision::after{content:"";position:absolute;right:-40px;top:-40px;width:200px;height:200px;background:radial-gradient(circle,rgba(255,255,255,.12),transparent 70%);border-radius:50%}
+.vision{background:linear-gradient(120deg,var(--g3a),var(--g4a) 52%,var(--g5a));color:#fff;border-radius:18px;padding:22px 24px;box-shadow:0 10px 30px rgba(46,111,181,.28);margin-bottom:20px;position:relative;overflow:hidden}
+.vision::after{content:"";position:absolute;right:-40px;top:-40px;width:220px;height:220px;background:radial-gradient(circle,rgba(255,255,255,.16),transparent 70%);border-radius:50%}
 .vision h2{font-size:1.05rem;font-weight:800;letter-spacing:.5px;display:flex;align-items:center;gap:8px;margin-bottom:4px}
-.vision .goal-line{font-size:.8rem;color:#ccfbf1;margin-bottom:16px}
+.vision .goal-line{font-size:.8rem;color:rgba(255,255,255,.85);margin-bottom:16px}
 .vision-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;position:relative;z-index:1}
 .vision-stat{background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.18);border-radius:12px;padding:12px 14px;backdrop-filter:blur(2px)}
 .vision-stat .lbl{font-size:.7rem;color:#d1fae5;text-transform:uppercase;letter-spacing:.6px}
 .vision-stat .val{font-size:1.5rem;font-weight:800;margin-top:2px;line-height:1.1}
 .vision-stat .val small{font-size:.85rem;font-weight:600;opacity:.85}
-.vision-stat .foot{font-size:.68rem;color:#a7f3d0;margin-top:3px}
+.vision-stat .foot{font-size:.68rem;color:rgba(255,255,255,.8);margin-top:3px}
 .divbar{margin-top:16px;position:relative;z-index:1}
-.divbar .cap{display:flex;justify-content:space-between;font-size:.72rem;color:#d1fae5;margin-bottom:5px}
-.divbar .track{height:12px;border-radius:8px;background:rgba(255,255,255,.18);overflow:hidden}
-.divbar .fill{height:100%;border-radius:8px;background:linear-gradient(90deg,#5eead4,#facc15);transition:width .6s}
+.divbar .cap{display:flex;justify-content:space-between;font-size:.72rem;color:rgba(255,255,255,.85);margin-bottom:5px}
+.divbar .track{height:12px;border-radius:8px;background:rgba(255,255,255,.20);overflow:hidden}
+.divbar .fill{height:100%;border-radius:8px;background:linear-gradient(90deg,var(--g1b),var(--g5b));transition:width .6s}
 
 /* KPI */
 .grid-kpi{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:20px}
-.kpi{background:var(--card);border-radius:14px;padding:16px 18px;box-shadow:var(--shadow);position:relative;overflow:hidden}
-.kpi .accent{position:absolute;top:0;left:0;width:5px;height:100%}
-.kpi .label{font-size:.72rem;color:var(--sub);text-transform:uppercase;letter-spacing:.6px;margin-bottom:5px;padding-left:10px}
-.kpi .value{font-size:1.55rem;font-weight:800;padding-left:10px;line-height:1.1}
-.kpi .delta{font-size:.76rem;padding-left:10px;margin-top:3px;font-weight:600}
+.kpi{background:var(--card);border-radius:14px;padding:18px 18px 16px;box-shadow:var(--shadow);position:relative;overflow:hidden}
+.kpi .accent{position:absolute;top:0;left:0;width:100%;height:6px;opacity:.95}
+.kpi .label{font-size:.72rem;color:var(--sub);text-transform:uppercase;letter-spacing:.6px;margin-bottom:5px}
+.kpi .value{font-size:1.55rem;font-weight:800;line-height:1.1}
+.kpi .delta{font-size:.76rem;margin-top:3px;font-weight:600}
 .up{color:var(--gain)}.down{color:var(--loss)}
 
 .grid-2{display:grid;grid-template-columns:repeat(auto-fit,minmax(440px,1fr));gap:18px;margin-bottom:20px}
@@ -101,8 +107,8 @@ th,td{padding:9px 11px;text-align:right;border-bottom:1px solid var(--line);whit
 th{background:#f8fafc;font-weight:700;color:var(--sub);font-size:.72rem;text-transform:uppercase;letter-spacing:.4px}
 td:first-child,th:first-child{text-align:left;font-weight:700;position:sticky;left:0;background:var(--card)}
 th:first-child{background:#f8fafc}
-tr:hover td{background:#f0fdfa}
-tr:hover td:first-child{background:#f0fdfa}
+tr:hover td{background:#f3f6fb}
+tr:hover td:first-child{background:#f3f6fb}
 .sym{font-weight:800}
 .biz{font-size:.68rem;color:var(--sub);font-weight:400}
 .chip{display:inline-block;padding:2px 9px;border-radius:20px;font-size:.68rem;font-weight:700;color:#fff}
@@ -171,13 +177,19 @@ textarea.paste{width:100%;min-height:130px;padding:12px;border:1px solid #d1d5db
 .sym-link{cursor:pointer;color:var(--accent);border-bottom:1.5px dotted var(--accent);transition:.12s}
 .sym-link:active,.sym-link:hover{color:var(--accent2)}
 .sym-ico{font-size:.72rem;opacity:.7}
+.quick-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:10px}
+.qbtn{border:none;border-radius:12px;padding:12px 10px;cursor:pointer;text-align:left;color:#fff;box-shadow:var(--shadow);position:relative;overflow:hidden;transition:.12s;touch-action:manipulation}
+.qbtn:active{transform:scale(.96)}
+.qbtn .qs{font-weight:800;font-size:1rem;line-height:1.1}
+.qbtn .qp{font-size:.78rem;font-weight:700;margin-top:3px;opacity:.95}
+.qbtn .qd{font-size:.64rem;opacity:.85;margin-top:2px}
 
 /* stock detail modal (panphol-style) */
 .modal-bg{position:fixed;inset:0;background:rgba(15,23,42,.55);backdrop-filter:blur(2px);z-index:60;display:none;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:20px}
 .modal-bg.show{display:block}
 .modal{background:var(--bg);max-width:900px;margin:0 auto;border-radius:18px;box-shadow:0 20px 60px rgba(0,0,0,.35);overflow:hidden;animation:pop .18s ease}
 @keyframes pop{from{transform:translateY(14px);opacity:.4}to{transform:translateY(0);opacity:1}}
-.modal-head{background:linear-gradient(135deg,#0f766e,#115e59);color:#fff;padding:18px 22px;display:flex;align-items:flex-start;justify-content:space-between;gap:12px;position:sticky;top:0;z-index:2}
+.modal-head{background:linear-gradient(120deg,var(--g3a),var(--g4a) 55%,var(--g5a));color:#fff;padding:18px 22px;display:flex;align-items:flex-start;justify-content:space-between;gap:12px;position:sticky;top:0;z-index:2}
 .modal-head .ttl{font-size:1.5rem;font-weight:800;line-height:1.1}
 .modal-head .sub{font-size:.82rem;color:#ccfbf1;margin-top:3px}
 .modal-head .chip{display:inline-block;margin-top:8px;padding:3px 12px;border-radius:20px;font-size:.72rem;font-weight:700;color:#fff}
@@ -193,6 +205,26 @@ textarea.paste{width:100%;min-height:130px;padding:12px;border:1px solid #d1d5db
 .md-chart{position:relative;height:260px}
 .md-note{font-size:.78rem;color:var(--sub);background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:10px 12px;margin-bottom:14px;line-height:1.6}
 @media(max-width:600px){.modal-bg{padding:0}.modal{border-radius:0;min-height:100%}.modal-head .ttl{font-size:1.25rem}}
+
+/* decision card */
+.md-card.decide{border:2px solid #eef1f6}
+.decide-inputs{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-bottom:14px}
+.verdict{border-radius:12px;padding:12px 15px;margin-bottom:14px;font-weight:700;font-size:.92rem;line-height:1.5;display:flex;flex-direction:column;gap:4px}
+.verdict .vd-badge{font-size:1.05rem;font-weight:800;display:flex;align-items:center;gap:8px}
+.verdict .vd-sub{font-weight:500;font-size:.82rem;opacity:.92}
+.verdict.v-trim{background:#fff1e8;border:1.5px solid #f7b58a;color:#b5460f}
+.verdict.v-part{background:#fef6e0;border:1.5px solid #f3d27a;color:#946200}
+.verdict.v-hold{background:#e7f6ee;border:1.5px solid #9ed9b6;color:#12703f}
+.compare{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.opt{border-radius:12px;padding:13px 14px;background:#fff;border:1px solid var(--line)}
+.opt-a{border-top:4px solid var(--g1a)}
+.opt-b{border-top:4px solid var(--g5a)}
+.opt-h{font-weight:800;font-size:.86rem;margin-bottom:9px}
+.opt .row{display:flex;justify-content:space-between;gap:8px;font-size:.82rem;padding:4px 0;border-bottom:1px dashed #eef1f6}
+.opt .row:last-child{border-bottom:none}
+.opt .row b{font-weight:800}
+.opt .big{font-size:1.15rem;font-weight:800;margin:2px 0 6px}
+@media(max-width:560px){.compare{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -272,6 +304,13 @@ textarea.paste{width:100%;min-height:130px;padding:12px;border:1px solid #d1d5db
   <div class="card">
     <h3><span class="dot" style="background:var(--gain)"></span>% กำไร/ขาดทุนยังไม่รับรู้ รายตัว (โอกาส take profit)</h3>
     <div class="chart-wrap" style="height:360px"><canvas id="chPL"></canvas></div>
+    <div class="hint" style="margin:8px 0 0">แตะที่แท่งกราฟเพื่อดูรายตัว (ปันผลย้อนหลัง + วิเคราะห์ Trim vs ถือ)</div>
+  </div>
+
+  <div class="card">
+    <h3><span class="dot" style="background:var(--accent)"></span>🔎 ดูรายตัว &amp; ตัดสินใจ Trim / ถือ</h3>
+    <div class="hint" style="margin:-4px 0 12px">เลือกหุ้นเพื่อดูกราฟปันผลย้อนหลัง ราคาย้อนหลัง และเครื่องมือเปรียบเทียบ “ขายทำกำไร vs ถือรอปันผล”</div>
+    <div id="quickAccess" class="quick-grid"></div>
   </div>
 </div>
 
@@ -375,6 +414,35 @@ GULF 51 51 40.82 63.50"></textarea>
     <div class="modal-body">
       <div class="md-kpis" id="md_kpis"></div>
       <div class="md-note" id="md_note" style="display:none"></div>
+
+      <!-- DECISION: Trim vs Hold -->
+      <div class="md-card decide" id="md_decide">
+        <h4>🔀 ตัดสินใจ: Trim ขายทำกำไร &nbsp;vs&nbsp; ถือรอปันผล</h4>
+        <div class="decide-inputs">
+          <div class="field"><label>ราคาเป้าหมายขาย (฿)</label><input id="d_target" type="number" inputmode="decimal" step="0.01" oninput="computeDecision()"></div>
+          <div class="field"><label>จำนวนที่จะขาย (หุ้น)</label><input id="d_shares" type="number" inputmode="numeric" oninput="computeDecision()"></div>
+          <div class="field"><label>ถือรอปันผล (ปี)</label><input id="d_years" type="number" inputmode="numeric" oninput="computeDecision()"></div>
+          <div class="field"><label>ค่าธรรมเนียมขาย (%)</label><input id="d_fee" type="number" inputmode="decimal" step="0.001" oninput="computeDecision()"></div>
+        </div>
+        <div id="d_verdict" class="verdict"></div>
+        <div class="compare">
+          <div class="opt opt-a">
+            <div class="opt-h">🅰️ TRIM — ขายทำกำไร</div>
+            <div id="d_a"></div>
+          </div>
+          <div class="opt opt-b">
+            <div class="opt-h">🅱️ HOLD — ถือรอปันผล</div>
+            <div id="d_b"></div>
+          </div>
+        </div>
+        <div class="hint" style="margin:10px 0 0">* เป็นเครื่องมือช่วยตัดสินใจจากตัวเลข ไม่ใช่คำแนะนำการลงทุน — ราคาปันผลในอนาคตไม่แน่นอน</div>
+      </div>
+
+      <div class="md-card">
+        <h4>💹 ราคาย้อนหลัง &amp; แนวต้นทุน/เป้าหมาย</h4>
+        <div class="md-chart"><canvas id="mdPrice"></canvas></div>
+        <div class="hint" style="margin:8px 0 0">บันทึกจุดราคาอัตโนมัติทุกครั้งที่คุณอัปเดตราคา (จากรูป/แก้ในตาราง) — ยิ่งอัปเดตบ่อย กราฟยิ่งละเอียด</div>
+      </div>
       <div class="md-card">
         <h4>💵 เงินปันผลต่อหุ้น รายปี (บาท/หุ้น)</h4>
         <div class="md-chart"><canvas id="mdDiv"></canvas></div>
@@ -396,14 +464,14 @@ GULF 51 51 40.82 63.50"></textarea>
 <script>
 /* ============ Sector master ============ */
 const SECTORS = {
-  BANK:   {name:'ธนาคาร',                     color:'#2a78d6'},
-  ENERGY: {name:'พลังงาน & สาธารณูปโภค',      color:'#1baf7a'},
-  INFRA:  {name:'ขนส่ง & โครงสร้างพื้นฐาน',   color:'#eda100'},
-  HEALTH: {name:'การแพทย์',                   color:'#e34948'},
-  COMM:   {name:'พาณิชย์ / ค้าปลีก',          color:'#4a3aa7'},
-  INSUR:  {name:'ประกันภัย',                  color:'#e87ba4'},
-  PROP:   {name:'อสังหาฯ / นิคมฯ',           color:'#eb6834'},
-  SERV:   {name:'บริการ / อื่นๆ',             color:'#008300'},
+  BANK:   {name:'ธนาคาร',                     color:'#2E7BC4'},
+  ENERGY: {name:'พลังงาน & สาธารณูปโภค',      color:'#12A69A'},
+  INFRA:  {name:'ขนส่ง & โครงสร้างพื้นฐาน',   color:'#F39C12'},
+  HEALTH: {name:'การแพทย์',                   color:'#D81B60'},
+  COMM:   {name:'พาณิชย์ / ค้าปลีก',          color:'#6A3FA0'},
+  INSUR:  {name:'ประกันภัย',                  color:'#EC407A'},
+  PROP:   {name:'อสังหาฯ / นิคมฯ',           color:'#E4572E'},
+  SERV:   {name:'บริการ / อื่นๆ',             color:'#43A047'},
 };
 const SECTOR_ORDER = Object.keys(SECTORS);
 
@@ -412,6 +480,8 @@ const DEFAULTS = {
   asOf:'13 Jul 2026 15:30',
   cash:36060.41,
   goal:75000,
+  horizon:5,        // ปีที่ใช้เทียบ (ถือรอปันผลกี่ปี)
+  feePct:0.257,     // ค่าธรรมเนียมขาย % (คอมมิชชั่น+VAT โดยประมาณ)
   notes:'เน้นถือกินปันผล + take profit เมื่อกำไรวิ่งแรง (เช่น KBANK, KKP). กระจายตามกลุ่มธุรกิจ ธนาคารเป็นแกนหลัก.',
   holdings:[
     // sym, biz, sector, vol, avgCost, price, cost(Amount), divPerShare
@@ -444,8 +514,35 @@ const LS_KEY='divPortfolio.v1';
 let DB=load();
 
 function load(){
-  try{const s=localStorage.getItem(LS_KEY);if(s)return JSON.parse(s);}catch(e){}
-  return JSON.parse(JSON.stringify(DEFAULTS));
+  let db;
+  try{const s=localStorage.getItem(LS_KEY);db=s?JSON.parse(s):null;}catch(e){}
+  if(!db)db=JSON.parse(JSON.stringify(DEFAULTS));
+  return migrate(db);
+}
+function todayStr(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+function migrate(db){
+  if(db.horizon==null)db.horizon=5;
+  if(db.feePct==null)db.feePct=0.257;
+  (db.holdings||[]).forEach(h=>{
+    if(!Array.isArray(h.ph)){
+      // seed price history: cost point then current market point
+      h.ph=[];
+      if(h.avg>0)h.ph.push({t:'ต้นทุน',p:h.avg});
+      if(h.price!==null&&!isNaN(h.price))h.ph.push({t:db.asOf||todayStr(),p:h.price});
+    }
+  });
+  return db;
+}
+/* record a new price point when the market price changes */
+function logPrice(h,newPrice){
+  if(newPrice===null||isNaN(newPrice))return;
+  if(!Array.isArray(h.ph))h.ph=[];
+  const last=h.ph[h.ph.length-1];
+  if(last&&Math.abs(last.p-newPrice)<1e-9)return; // unchanged
+  const t=todayStr();
+  if(last&&last.t===t)last.p=newPrice;            // same day → overwrite
+  else h.ph.push({t,p:newPrice});
+  if(h.ph.length>60)h.ph=h.ph.slice(-60);
 }
 function save(){localStorage.setItem(LS_KEY,JSON.stringify(DB));}
 function fmt(n,d=0){if(n===null||n===undefined||isNaN(n))return '—';return n.toLocaleString('th-TH',{minimumFractionDigits:d,maximumFractionDigits:d});}
@@ -558,13 +655,16 @@ function renderCharts(){
     type:'bar',
     data:{labels:rows.map(r=>r.h.sym),
       datasets:[{data:rows.map(r=>r.m.plpct),
-        backgroundColor:rows.map(r=>r.m.plpct>=0?'#16a34a':'#dc2626'),
+        backgroundColor:rows.map(r=>r.m.plpct>=0?'#1f9d55':'#e02424'),
         borderRadius:4,borderSkipped:false}]},
     options:{responsive:true,maintainAspectRatio:false,
+      onClick:(e,el)=>{if(el&&el.length)openDetail(rows[el[0].index].h.sym);},
+      onHover:(e,el)=>{e.native.target.style.cursor=el&&el.length?'pointer':'default';},
       plugins:{legend:{display:false},
-        tooltip:{callbacks:{label:c=>{const r=rows[c.dataIndex];return [' กำไร/ขาดทุน: '+(r.m.pl>=0?'+':'')+fmt(r.m.pl)+' บาท',' คิดเป็น '+r.m.plpct.toFixed(2)+'%'];}}}},
+        tooltip:{callbacks:{label:c=>{const r=rows[c.dataIndex];return [' กำไร/ขาดทุน: '+(r.m.pl>=0?'+':'')+fmt(r.m.pl)+' บาท',' คิดเป็น '+r.m.plpct.toFixed(2)+'%',' (แตะเพื่อดูรายตัว)'];}}}},
       scales:{y:{grid:{color:'#f1f5f9'},ticks:{callback:v=>v+'%'}},x:{grid:{display:false}}}}
   });
+  renderQuick();
 }
 
 /* ============ Render: Sector blocks ============ */
@@ -643,7 +743,7 @@ function renderManage(){
 /* ============ Actions ============ */
 function edit(i,key,val){
   if(key==='sector'){DB.holdings[i].sector=val;}
-  else if(key==='price'){DB.holdings[i].price=val===''?null:parseFloat(val);}
+  else if(key==='price'){const np=val===''?null:parseFloat(val);DB.holdings[i].price=np;logPrice(DB.holdings[i],np);}
   else{DB.holdings[i][key]=parseFloat(val)||0;}
   // recompute cost basis when vol/avg edited (keep broker precision if only price changed)
   if(key==='vol'||key==='avg'){DB.holdings[i].cost=(DB.holdings[i].vol||0)*(DB.holdings[i].avg||0);}
@@ -662,8 +762,8 @@ function addStock(){
   const price=priceRaw===''?null:parseFloat(priceRaw);
   const div=parseFloat(document.getElementById('f_div').value)||0;
   const existing=DB.holdings.find(h=>h.sym===sym);
-  if(existing){existing.vol=vol;existing.avg=avg;existing.price=price;existing.div=div;existing.cost=vol*avg;}
-  else DB.holdings.push({sym,biz:document.getElementById('f_biz').value.trim(),sector:document.getElementById('f_sector').value,vol,avg,price,cost:vol*avg,div});
+  if(existing){existing.vol=vol;existing.avg=avg;existing.price=price;existing.div=div;existing.cost=vol*avg;logPrice(existing,price);}
+  else{const nh={sym,biz:document.getElementById('f_biz').value.trim(),sector:document.getElementById('f_sector').value,vol,avg,price,cost:vol*avg,div,ph:[]};if(avg>0)nh.ph.push({t:'ต้นทุน',p:avg});logPrice(nh,price);DB.holdings.push(nh);}
   ['f_sym','f_biz','f_vol','f_cost','f_price','f_div'].forEach(id=>document.getElementById(id).value='');
   save();renderAll();toast(existing?'อัปเดต '+sym:'เพิ่ม '+sym+' แล้ว');
 }
@@ -702,8 +802,8 @@ function importPaste(){
     if(nums.length>=4){vol=nums[1];avg=nums[2];price=isNaN(nums[3])?null:nums[3];}
     else{vol=nums[0];avg=nums[1];price=isNaN(nums[2])?null:nums[2];}
     const ex=DB.holdings.find(h=>h.sym===sym);
-    if(ex){ex.vol=vol;ex.avg=avg;ex.price=price;ex.cost=vol*avg;updated++;}
-    else{DB.holdings.push({sym,biz:'',sector:'SERV',vol,avg,price,cost:vol*avg,div:0});added++;}
+    if(ex){ex.vol=vol;ex.avg=avg;ex.price=price;ex.cost=vol*avg;logPrice(ex,price);updated++;}
+    else{const nh={sym,biz:'',sector:'SERV',vol,avg,price,cost:vol*avg,div:0,ph:[]};if(avg>0)nh.ph.push({t:'ต้นทุน',p:avg});logPrice(nh,price);DB.holdings.push(nh);added++;}
   });
   if(added+updated===0){toast('ไม่พบข้อมูลที่อ่านได้ ตรวจรูปแบบอีกครั้ง');return;}
   save();renderAll();
@@ -728,9 +828,32 @@ function resetData(){
   DB=JSON.parse(JSON.stringify(DEFAULTS));save();renderAll();toast('รีเซ็ตแล้ว');
 }
 
+/* ============ Overview quick access (ดูรายตัว) ============ */
+function renderQuick(){
+  const el=document.getElementById('quickAccess');if(!el)return;
+  const rows=DB.holdings.map(h=>({h,m:metricsFor(h)})).sort((a,b)=>b.m.plpct-a.m.plpct);
+  el.innerHTML=rows.map(({h,m})=>{
+    const c=SECTORS[h.sector]?SECTORS[h.sector].color:'#64748b';
+    const pl=m.priced?(m.pl>=0?'+':'')+m.plpct.toFixed(1)+'%':'N/A';
+    return `<button class="qbtn" style="background:linear-gradient(135deg,${c},${shade(c,-16)})" onclick="openDetail('${h.sym}')">
+      <div class="qs">${h.sym}</div>
+      <div class="qp">${pl}</div>
+      <div class="qd">Yield ${m.ycur?m.ycur.toFixed(1)+'%':'—'}</div>
+    </button>`;
+  }).join('');
+}
+
 /* ============ Stock detail (dividend history, panphol-style) ============ */
-let mdDivChart,mdYieldChart;
+let mdDivChart,mdYieldChart,mdPriceChart,curSym=null;
+function divCAGR(sym){
+  const hist=HISTORY[sym];if(!hist)return null;
+  const s=HIST_YEARS.map(y=>hist[y]?hist[y].d:null);
+  const fi=s.findIndex(v=>v&&v>0), li=s.length-1-[...s].reverse().findIndex(v=>v&&v>0);
+  if(fi>-1&&li>fi&&s[fi]>0)return (Math.pow(s[li]/s[fi],1/(li-fi))-1)*100;
+  return null;
+}
 function openDetail(sym){
+  curSym=sym;
   const h=DB.holdings.find(x=>x.sym===sym);
   const hist=HISTORY[sym];
   const secKey=h?h.sector:null;
@@ -787,7 +910,19 @@ function openDetail(sym){
   document.getElementById('md_table').innerHTML=
     `<thead><tr><th>ปี พ.ศ.</th><th>Q1</th><th>Q2</th><th>Q3</th><th>Q4</th><th>รวม/ปี</th><th>%Yield</th></tr></thead><tbody>${rows}</tbody>`;
 
+  // decision inputs (only meaningful for a priced holding you own)
+  const dCard=document.getElementById('md_decide');
+  if(h&&m&&m.priced&&h.vol>0){
+    dCard.style.display='';
+    const suggTarget=h.target||Math.round(h.price*1.15*100)/100;
+    document.getElementById('d_target').value=suggTarget;
+    document.getElementById('d_shares').value=h._trim||Math.floor(h.vol/2);
+    document.getElementById('d_years').value=DB.horizon||5;
+    document.getElementById('d_fee').value=DB.feePct!=null?DB.feePct:0.257;
+  }else{dCard.style.display='none';}
+
   document.getElementById('detailModal').classList.add('show');
+  document.getElementById('detailModal').scrollTop=0;
   document.body.style.overflow='hidden';
 
   // charts — draw after modal visible so canvas has size
@@ -797,7 +932,7 @@ function openDetail(sym){
     mdDivChart=new Chart(document.getElementById('mdDiv'),{
       type:'bar',
       data:{labels:yearsCE,datasets:[{data:divSeries,
-        backgroundColor:divSeries.map((_,i)=>i===lastI?'#eda100':'#0f766e'),
+        backgroundColor:divSeries.map((_,i)=>i===lastI?'#F39C12':'#2E6FB5'),
         borderRadius:5,borderSkipped:false}]},
       options:{responsive:true,maintainAspectRatio:false,
         plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>' '+money(c.raw,2)+' บาท/หุ้น'}}},
@@ -807,13 +942,97 @@ function openDetail(sym){
     mdYieldChart=new Chart(document.getElementById('mdYield'),{
       type:'bar',
       data:{labels:yearsCE,datasets:[{data:yldSeries,
-        backgroundColor:yldSeries.map((_,i)=>i===lastI?'#1baf7a':'#5eead4'),
+        backgroundColor:yldSeries.map((_,i)=>i===lastI?'#12A69A':'#7ddac9'),
         borderRadius:5,borderSkipped:false}]},
       options:{responsive:true,maintainAspectRatio:false,
         plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>' Yield '+(c.raw!=null?c.raw.toFixed(2):'—')+'%'}}},
         scales:{y:{beginAtZero:true,grid:{color:'#f1f5f9'},ticks:{callback:v=>v+'%'}},x:{grid:{display:false}}}}
     });
+    // price history chart
+    if(mdPriceChart)mdPriceChart.destroy();
+    const ph=(h&&Array.isArray(h.ph))?h.ph:[];
+    const plabels=ph.map(x=>x.t), pdata=ph.map(x=>x.p);
+    const avgLine=ph.map(()=>h?h.avg:null);
+    const tgt=h?(h.target||null):null;
+    const ds=[{label:'ราคาตลาด',data:pdata,borderColor:'#2E6FB5',backgroundColor:'rgba(46,111,181,.12)',borderWidth:2.5,tension:.25,fill:true,pointRadius:4,pointBackgroundColor:'#2E6FB5'},
+              {label:'ต้นทุนเฉลี่ย',data:avgLine,borderColor:'#E4572E',borderWidth:1.5,borderDash:[6,4],pointRadius:0,fill:false}];
+    if(tgt)ds.push({label:'ราคาเป้าหมาย',data:ph.map(()=>tgt),borderColor:'#12A69A',borderWidth:1.5,borderDash:[3,3],pointRadius:0,fill:false});
+    mdPriceChart=new Chart(document.getElementById('mdPrice'),{
+      type:'line',data:{labels:plabels,datasets:ds},
+      options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
+        plugins:{legend:{display:true,labels:{boxWidth:12,font:{size:11}}},tooltip:{callbacks:{label:c=>' '+c.dataset.label+': '+money(c.raw,2)+' ฿'}}},
+        scales:{y:{grid:{color:'#f1f5f9'},ticks:{callback:v=>money(v,2)}},x:{grid:{display:false}}}}
+    });
+    computeDecision();
   },60);
+}
+/* ---- Trim vs Hold decision engine ---- */
+function computeDecision(){
+  const h=DB.holdings.find(x=>x.sym===curSym);if(!h)return;
+  const m=metricsFor(h);if(!m.priced)return;
+  let target=parseFloat(document.getElementById('d_target').value); if(isNaN(target))target=h.price;
+  let sell=parseInt(document.getElementById('d_shares').value); if(isNaN(sell))sell=0;
+  sell=Math.max(0,Math.min(sell,h.vol));
+  let years=parseFloat(document.getElementById('d_years').value); if(isNaN(years)||years<=0)years=5;
+  let feePct=parseFloat(document.getElementById('d_fee').value); if(isNaN(feePct))feePct=0.257;
+  // persist choices
+  h.target=target; h._trim=sell; DB.horizon=years; DB.feePct=feePct; save();
+
+  const fee=target*sell*feePct/100;
+  const realized=(target-h.avg)*sell-fee;
+  const cashOut=target*sell-fee;
+  const annDivSold=(h.div||0)*sell;
+  const divN=annDivSold*years;
+  const breakEven=annDivSold>0?realized/annDivSold:Infinity;
+  const cagr=divCAGR(curSym);
+
+  // Option A card (Trim)
+  document.getElementById('d_a').innerHTML=
+    `<div class="big" style="color:#b5460f">+${money(realized)} ฿</div>`+
+    `<div class="row"><span>กำไรรับรู้ทันที</span><b>+${money(realized)} ฿</b></div>`+
+    `<div class="row"><span>เงินสดที่ได้คืน</span><b>${money(cashOut)} ฿</b></div>`+
+    `<div class="row"><span>ปันผลที่เสียไป/ปี</span><b>-${money(annDivSold)} ฿</b></div>`+
+    `<div class="row"><span>ค่าธรรมเนียมขาย</span><b>${money(fee)} ฿</b></div>`+
+    `<div class="row"><span>ขาย ${fmt(sell)} หุ้น @ ${money(target,2)}</span><b>เหลือ ${fmt(h.vol-sell)} หุ้น</b></div>`;
+  // Option B card (Hold)
+  const stillVal=h.price*sell;
+  document.getElementById('d_b').innerHTML=
+    `<div class="big" style="color:#12703f">+${money(divN)} ฿</div>`+
+    `<div class="row"><span>ปันผลรวม ${years} ปี</span><b>+${money(divN)} ฿</b></div>`+
+    `<div class="row"><span>ปันผล/ปี (หุ้นส่วนนี้)</span><b>${money(annDivSold)} ฿</b></div>`+
+    `<div class="row"><span>Yield ปัจจุบัน</span><b>${m.ycur.toFixed(2)}%</b></div>`+
+    `<div class="row"><span>ยังถือหุ้นมูลค่า</span><b>~${money(stillVal)} ฿</b></div>`+
+    `<div class="row"><span>เติบโตปันผล (CAGR)</span><b>${cagr!=null?(cagr>=0?'+':'')+cagr.toFixed(1)+'%':'—'}</b></div>`;
+
+  // verdict scoring — driven mainly by break-even (sale profit ÷ dividends/yr) vs your horizon
+  let score=0; const why=[];
+  if(!isFinite(breakEven)){
+    score+=2;why.push('หุ้นนี้แทบไม่จ่ายปันผล — ควรพิจารณาจากส่วนต่างราคาเป็นหลัก');
+  }else{
+    const ratio=breakEven/years;
+    if(ratio>=2){score+=3;why.push('กำไรที่ขายได้ = ปันผลถึง '+breakEven.toFixed(1)+' ปี (มากกว่ากรอบ '+years+' ปี ~'+ratio.toFixed(1)+' เท่า) → ขายคุ้มกว่ารอปันผลชัดเจน');}
+    else if(ratio>=1.3){score+=2;why.push('กำไรที่ขายได้ = ปันผล '+breakEven.toFixed(1)+' ปี (มากกว่ากรอบ '+years+' ปี) → ขายทำกำไรคุ้มกว่า');}
+    else if(ratio>=1){score+=1;why.push('กำไรที่ขายได้ ≈ ปันผล '+breakEven.toFixed(1)+' ปี (พอ ๆ กับกรอบที่ตั้งไว้)');}
+    else if(ratio<=0.6){score-=2;why.push('กำไรที่ขายได้ = ปันผลแค่ '+breakEven.toFixed(1)+' ปี → ถือรับปันผลในกรอบ '+years+' ปี ได้มากกว่า');}
+    else if(ratio<=0.85){score-=1;why.push('กำไรที่ขายได้ = ปันผล '+breakEven.toFixed(1)+' ปี (น้อยกว่ากรอบ) → เอนไปถือรอปันผล');}
+  }
+  if(m.plpct>=80){score+=1;why.push('กำไรสะสมสูงมาก (+'+m.plpct.toFixed(0)+'%) — ล็อกกำไรลดความเสี่ยงย่อ');}
+  else if(m.plpct<0){score-=1;why.push('ยังขาดทุน ('+m.plpct.toFixed(0)+'%) — การขายตอนนี้ไม่ใช่การทำกำไร');}
+  if(m.ycur>=6){score-=1;why.push('Yield ปัจจุบันยังสูง ('+m.ycur.toFixed(1)+'%) — คุ้มที่จะถือกินปันผล');}
+  if(cagr!=null&&cagr>=10){score-=1;why.push('ปันผลเติบโตต่อเนื่อง (CAGR +'+cagr.toFixed(0)+'%) — ถือได้ประโยชน์ระยะยาว');}
+
+  let cls,badge,sub;
+  if(score>=3){cls='v-trim';badge='🅰️ แนะนำ: ขายทำกำไร (Trim มาก/เต็ม)';sub='กำไรที่ล็อกได้วันนี้มากกว่าปันผลที่จะได้ในกรอบเวลา — ทยอยขายเก็บกำไร';}
+  else if(score>=1){cls='v-part';badge='⚖️ แนะนำ: Trim บางส่วน แล้วถือส่วนที่เหลือ';sub='ขายบางส่วนล็อกกำไร + คงหุ้นบางส่วนไว้รับปันผลต่อ';}
+  else{cls='v-hold';badge='🅱️ แนะนำ: ถือต่อ รอปันผล';sub='ถือรับปันผลในกรอบเวลาที่ตั้งไว้ให้ผลตอบแทนคุ้มกว่าการขายตอนนี้';}
+  const beTxt=isFinite(breakEven)
+    ?`💡 กำไรจากการขายวันนี้ ≈ เงินปันผล <b>${breakEven.toFixed(1)} ปี</b> &nbsp;(เทียบกรอบถือ ${years} ปี)`
+    :'หุ้นนี้ไม่จ่ายปันผล — พิจารณาจากส่วนต่างราคาเป็นหลัก';
+  document.getElementById('d_verdict').className='verdict '+cls;
+  document.getElementById('d_verdict').innerHTML=
+    `<div class="vd-badge">${badge}</div>`+
+    `<div class="vd-sub">${beTxt}</div>`+
+    (why.length?`<div class="vd-sub">• ${why.join('<br>• ')}</div>`:'');
 }
 function closeDetail(){
   document.getElementById('detailModal').classList.remove('show');
