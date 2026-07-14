@@ -1,0 +1,17 @@
+{
+  "name": "Dividend Portfolio Dashboard",
+  "short_name": "พอร์ตปันผล",
+  "description": "แดชบอร์ดพอร์ตหุ้นปันผล SET — monitor กลุ่มธุรกิจ ปันผล และจังหวะ take profit",
+  "lang": "th",
+  "start_url": "./stock_portfolio_dashboard.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0f766e",
+  "theme_color": "#0f766e",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

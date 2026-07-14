@@ -8,6 +8,9 @@
 <meta name="apple-mobile-web-app-title" content="พอร์ตปันผล">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#0f766e">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-180.png">
 <title>Dividend Portfolio Dashboard</title>
 <script>/*! Chart.js v4.4.7 (bundled offline, MIT License) */
 /*!
@@ -676,6 +679,11 @@ function renderAll(){renderTop();renderSectors();renderManage();
   if(document.getElementById('overview').classList.contains('active'))renderCharts();}
 renderAll();
 renderCharts();
+
+/* PWA: enable install & offline in Chrome when served over http(s); no-op on file:// */
+if('serviceWorker' in navigator && location.protocol.indexOf('http')===0){
+  navigator.serviceWorker.register('sw.js').catch(()=>{});
+}
 </script>
 </body>
 </html>
