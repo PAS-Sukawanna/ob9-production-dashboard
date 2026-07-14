@@ -166,6 +166,33 @@ textarea.paste{width:100%;min-height:130px;padding:12px;border:1px solid #d1d5db
   .tab{padding:14px 16px;font-size:.85rem}
   .form-grid{grid-template-columns:repeat(auto-fit,minmax(130px,1fr))}
 }
+
+/* clickable symbol */
+.sym-link{cursor:pointer;color:var(--accent);border-bottom:1.5px dotted var(--accent);transition:.12s}
+.sym-link:active,.sym-link:hover{color:var(--accent2)}
+.sym-ico{font-size:.72rem;opacity:.7}
+
+/* stock detail modal (panphol-style) */
+.modal-bg{position:fixed;inset:0;background:rgba(15,23,42,.55);backdrop-filter:blur(2px);z-index:60;display:none;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:20px}
+.modal-bg.show{display:block}
+.modal{background:var(--bg);max-width:900px;margin:0 auto;border-radius:18px;box-shadow:0 20px 60px rgba(0,0,0,.35);overflow:hidden;animation:pop .18s ease}
+@keyframes pop{from{transform:translateY(14px);opacity:.4}to{transform:translateY(0);opacity:1}}
+.modal-head{background:linear-gradient(135deg,#0f766e,#115e59);color:#fff;padding:18px 22px;display:flex;align-items:flex-start;justify-content:space-between;gap:12px;position:sticky;top:0;z-index:2}
+.modal-head .ttl{font-size:1.5rem;font-weight:800;line-height:1.1}
+.modal-head .sub{font-size:.82rem;color:#ccfbf1;margin-top:3px}
+.modal-head .chip{display:inline-block;margin-top:8px;padding:3px 12px;border-radius:20px;font-size:.72rem;font-weight:700;color:#fff}
+.modal-close{background:rgba(255,255,255,.2);border:none;color:#fff;width:40px;height:40px;min-width:40px;border-radius:12px;font-size:1.3rem;cursor:pointer;line-height:1;touch-action:manipulation}
+.modal-close:active{background:rgba(255,255,255,.35)}
+.modal-body{padding:18px 22px 26px}
+.md-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-bottom:18px}
+.md-kpi{background:var(--card);border-radius:12px;padding:11px 13px;box-shadow:var(--shadow)}
+.md-kpi .l{font-size:.68rem;color:var(--sub);text-transform:uppercase;letter-spacing:.4px}
+.md-kpi .v{font-size:1.2rem;font-weight:800;margin-top:2px;line-height:1.1}
+.md-card{background:var(--card);border-radius:14px;padding:16px 18px;box-shadow:var(--shadow);margin-bottom:16px}
+.md-card h4{font-size:.9rem;font-weight:800;margin-bottom:12px;display:flex;align-items:center;gap:7px}
+.md-chart{position:relative;height:260px}
+.md-note{font-size:.78rem;color:var(--sub);background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:10px 12px;margin-bottom:14px;line-height:1.6}
+@media(max-width:600px){.modal-bg{padding:0}.modal{border-radius:0;min-height:100%}.modal-head .ttl{font-size:1.25rem}}
 </style>
 </head>
 <body>
@@ -334,6 +361,36 @@ GULF 51 51 40.82 63.50"></textarea>
   Dividend Portfolio Dashboard &middot; ข้อมูลจากผู้ใช้ (แก้ไขได้) &middot; ปันผลเป็นค่าประมาณจากปีล่าสุด ควรตรวจสอบกับประกาศจริงของบริษัท
 </div>
 
+<!-- ===================== STOCK DETAIL MODAL (dividend history) ===================== -->
+<div class="modal-bg" id="detailModal" onclick="if(event.target===this)closeDetail()">
+  <div class="modal">
+    <div class="modal-head">
+      <div>
+        <div class="ttl" id="md_sym">—</div>
+        <div class="sub" id="md_biz">—</div>
+        <span class="chip" id="md_sector">—</span>
+      </div>
+      <button class="modal-close" onclick="closeDetail()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="md-kpis" id="md_kpis"></div>
+      <div class="md-note" id="md_note" style="display:none"></div>
+      <div class="md-card">
+        <h4>💵 เงินปันผลต่อหุ้น รายปี (บาท/หุ้น)</h4>
+        <div class="md-chart"><canvas id="mdDiv"></canvas></div>
+      </div>
+      <div class="md-card">
+        <h4>📈 อัตราผลตอบแทนเงินปันผล รายปี (% Yield)</h4>
+        <div class="md-chart"><canvas id="mdYield"></canvas></div>
+      </div>
+      <div class="md-card">
+        <h4>📋 ประวัติการจ่ายปันผล</h4>
+        <div class="table-wrap"><table id="md_table"></table></div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -378,6 +435,11 @@ const DEFAULTS = {
 };
 
 /* ============ State ============ */
+/* ============ 5-year dividend history (2564-2568) from SETHD/JITTA % YEILD sheet ============ */
+const HIST_YEARS=[2564,2565,2566,2567,2568];       // พ.ศ.
+const HIST_YEARS_CE={2564:2021,2565:2022,2566:2023,2567:2024,2568:2025};
+const HISTORY={"AEONTS":{"2568":{"q":[null,null,2.55,null],"d":2.55,"y":2.27},"2567":{"q":[null,null,2.55,2.95],"d":5.5,"y":4.57},"2566":{"q":[null,2.55,null,2.95],"d":5.5,"y":3.55},"2565":{"q":[null,2.55,null,2.95],"d":5.5,"y":3.16},"2564":{"q":[null,null,2.5,2.65],"d":5.15,"y":2.78}},"AMATA":{"2568":{"q":[null,0.35,null,0.75],"d":1.1,"y":5.94},"2567":{"q":[null,0.25,null,0.55],"d":0.8,"y":4.65},"2566":{"q":[null,0.25,null,0.4],"d":0.65,"y":2.84},"2565":{"q":[null,0.2,null,0.4],"d":0.6,"y":2.78},"2564":{"q":[null,0.1,null,0.3],"d":0.4,"y":1.91}},"AP":{"2568":{"q":[null,null,null,0.52],"d":0.52,"y":6.5},"2567":{"q":[null,null,null,0.6],"d":0.6,"y":8.28},"2566":{"q":[null,null,null,0.7],"d":0.7,"y":7.11},"2565":{"q":[null,null,null,0.65],"d":0.65,"y":5.33},"2564":{"q":[null,null,null,0.5],"d":0.5,"y":4.72}},"BAM":{"2568":{"q":[null,null,null,0.5],"d":0.5,"y":7.35},"2567":{"q":[null,null,null,0.35],"d":0.35,"y":5.6},"2566":{"q":[null,null,null,0.38],"d":0.38,"y":3.86},"2565":{"q":[null,null,null,0.55],"d":0.55,"y":4.51},"2564":{"q":[null,null,null,0.55],"d":0.55,"y":2.86}},"BBL":{"2568":{"q":[null,2,null,8],"d":10,"y":6.24},"2567":{"q":[null,2,null,6.5],"d":8.5,"y":6.21},"2566":{"q":[null,2,null,5],"d":7,"y":4.81},"2565":{"q":[null,1.5,null,3],"d":4.5,"y":3},"2564":{"q":[null,1,null,2.5],"d":3.5,"y":2.74}},"HMPRO":{"2568":{"q":[null,0.16,null,0.22],"d":0.38,"y":5.64},"2567":{"q":[null,0.18,null,0.25],"d":0.43,"y":4.59},"2566":{"q":[null,0.18,null,0.22],"d":0.4,"y":3.48},"2565":{"q":[null,0.17,null,0.21],"d":0.38,"y":2.7},"2564":{"q":[null,0.12,null,0.2],"d":0.32,"y":2.12}},"JMT":{"2568":{"q":[null,0.24,null,0.43],"d":0.67,"y":6.53},"2567":{"q":[null,0.38,null,0.28],"d":0.66,"y":4.82},"2566":{"q":[null,0.34,null,0.49],"d":0.83,"y":3.03},"2565":{"q":[null,0.49,null,0.59],"d":1.08,"y":2.01},"2564":{"q":[null,0.4,null,0.42],"d":0.82,"y":1.47}},"KBANK":{"2568":{"q":[null,2,null,12],"d":14,"y":7.73},"2567":{"q":[null,1.5,null,8],"d":9.5,"y":6.26},"2566":{"q":[null,0.5,null,6],"d":6.5,"y":5.23},"2565":{"q":[null,0.5,null,3.5],"d":4,"y":2.96},"2564":{"q":[null,0.5,null,2.75],"d":3.25,"y":2.23}},"KCE":{"2568":{"q":[null,0.6,null,0.6],"d":1.2,"y":5.09},"2567":{"q":[null,0.6,null,0.6],"d":1.2,"y":4.85},"2566":{"q":[null,0.6,null,0.7],"d":1.3,"y":3.08},"2565":{"q":[null,1,null,0.6],"d":1.6,"y":3.22},"2564":{"q":[null,0.6,null,1],"d":1.6,"y":2.32}},"KKP":{"2568":{"q":[null,1.5,null,4.2],"d":5.7,"y":7.72},"2567":{"q":[null,1.25,null,2.75],"d":4,"y":8.6},"2566":{"q":[null,1.25,null,1.75],"d":3,"y":5.53},"2565":{"q":[null,1.75,null,1.5],"d":3.25,"y":5.03},"2564":{"q":[null,0.75,null,2.2],"d":2.95,"y":4.46}},"KTB":{"2568":{"q":[null,null,0.43,2.24],"d":2.67,"y":8.35},"2567":{"q":[null,null,null,1.54],"d":1.54,"y":7.2},"2566":{"q":[null,null,null,0.868],"d":0.868,"y":5.36},"2565":{"q":[null,null,null,0.682],"d":0.682,"y":4.08},"2564":{"q":[null,null,null,0.5725],"d":0.5725,"y":4.37}},"LH":{"2568":{"q":[null,0.13,null,0.12],"d":0.25,"y":6.46},"2567":{"q":[null,0.15,null,0.17],"d":0.32,"y":6.84},"2566":{"q":[null,0.2,null,0.3],"d":0.5,"y":6.59},"2565":{"q":[null,0.25,null,0.35],"d":0.6,"y":6.52},"2564":{"q":[null,0.25,null,0.25],"d":0.5,"y":5.92}},"M":{"2568":{"q":[null,0.5,null,0.5],"d":1,"y":4.84},"2567":{"q":[null,0.5,null,1],"d":1.5,"y":7.41},"2566":{"q":[null,0.6,null,1],"d":1.6,"y":4.02},"2565":{"q":[null,0.5,null,0.9],"d":1.4,"y":2.72},"2564":{"q":[null,null,null,0.8],"d":0.8,"y":1.53}},"MEGA":{"2568":{"q":[null,0.8,null,0.8],"d":1.6,"y":5.22},"2567":{"q":[null,0.8,null,0.8],"d":1.6,"y":4.55},"2566":{"q":[null,0.8,null,0.8],"d":1.6,"y":3.84},"2565":{"q":[null,0.75,null,0.85],"d":1.6,"y":3.42},"2564":{"q":[null,0.52,null,0.86],"d":1.38,"y":3.1}},"PRM":{"2568":{"q":[null,0.25,null,0.25],"d":0.5,"y":6.69},"2567":{"q":[null,0.24,null,0.24],"d":0.48,"y":7.19},"2566":{"q":[null,null,0.1,0.26],"d":0.36,"y":5.46},"2565":{"q":[null,null,0.09,0.25],"d":0.34,"y":5.54},"2564":{"q":[null,null,0.08,0.18],"d":0.26,"y":4.33}},"PTT":{"2568":{"q":[null,0.9,0.9,1.4],"d":3.2,"y":9.7},"2567":{"q":[null,0.8,null,1.3],"d":2.1,"y":6.78},"2566":{"q":[null,0.8,null,1.2],"d":2,"y":5.98},"2565":{"q":[null,1.3,null,0.7],"d":2,"y":5.93},"2564":{"q":[null,1.2,null,0.8],"d":2,"y":5.06}},"PTTEP":{"2568":{"q":[null,4.1,null,4.65],"d":8.75,"y":6.92},"2567":{"q":[null,4.5,null,5.125],"d":9.625,"y":7.51},"2566":{"q":[null,4.25,null,5.25],"d":9.5,"y":6.12},"2565":{"q":[null,4.25,null,5],"d":9.25,"y":5.86},"2564":{"q":[null,2,null,3],"d":5,"y":4.21}},"QH":{"2568":{"q":[null,0.02,null,0.07],"d":0.09,"y":6.73},"2567":{"q":[null,0.03,null,0.08],"d":0.11,"y":7.01},"2566":{"q":[null,0.05,null,0.1],"d":0.15,"y":6.82},"2565":{"q":[null,0.04,null,0.1],"d":0.14,"y":6.12},"2564":{"q":[null,0.03,null,0.07],"d":0.1,"y":4.53}},"RATCH":{"2568":{"q":[null,0.8,null,0.8],"d":1.6,"y":5.84},"2567":{"q":[null,0.8,null,0.8],"d":1.6,"y":5.68},"2566":{"q":[null,0.8,null,0.8],"d":1.6,"y":5.08},"2565":{"q":[null,0.8,null,0.8],"d":1.6,"y":3.97},"2564":{"q":[null,1.15,null,1.35],"d":2.5,"y":5.56}},"RCL":{"2568":{"q":[null,0.5,0.5,1.5],"d":2.5,"y":8.87},"2567":{"q":[null,0.5,0.5,1.5],"d":2.5,"y":10.56},"2566":{"q":[null,0.25,null,0.5],"d":0.75,"y":3.57},"2565":{"q":[null,1.75,2.25,3],"d":7,"y":23.6},"2564":{"q":[null,1.5,1.5,3],"d":6,"y":12.6}},"SCB":{"2568":{"q":[null,2,null,9.28],"d":11.28,"y":8.4},"2567":{"q":[null,2,null,8.44],"d":10.44,"y":9.3},"2566":{"q":[null,2.5,null,7.84],"d":10.34,"y":9.59},"2565":{"q":[null,null,1.5,5.19],"d":6.69,"y":6.57},"2564":{"q":[null,1.43,null,2.63],"d":4.06,"y":3.34}},"SIRI":{"2568":{"q":[null,0.05,null,0.08],"d":0.13,"y":9.01},"2567":{"q":[null,0.07,null,0.08],"d":0.15,"y":9.06},"2566":{"q":[null,0.1,null,0.1],"d":0.2,"y":10.83},"2565":{"q":[null,0.04,null,0.11],"d":0.15,"y":10.14},"2564":{"q":[null,0,null,0.06],"d":0.06,"y":5.04}},"SPALI":{"2568":{"q":[null,0.55,null,0.7],"d":1.25,"y":8.03},"2567":{"q":[null,0.6,null,0.85],"d":1.45,"y":9.06},"2566":{"q":[null,0.7,null,0.75],"d":1.45,"y":7.23},"2565":{"q":[null,0.7,null,0.75],"d":1.45,"y":7.16},"2564":{"q":[null,0.5,null,0.75],"d":1.25,"y":5.82}},"TASCO":{"2568":{"q":[null,null,0.8,0.2],"d":1,"y":7.44},"2567":{"q":[null,0,null,0.9],"d":0.9,"y":5.96},"2566":{"q":[null,0.25,null,1],"d":1.25,"y":7.76},"2565":{"q":[null,null,0.25,1],"d":1.25,"y":6.94},"2564":{"q":[null,0.25,null,0.8],"d":1.05,"y":1.4}},"TCAP":{"2568":{"q":[null,1.3,1.3,2.2],"d":4.8,"y":5.2},"2567":{"q":[null,1.25,null,2.05],"d":3.3,"y":6.9},"2566":{"q":[null,null,1.2,2],"d":3.2,"y":6.51},"2565":{"q":[null,null,1.2,1.9],"d":3.1,"y":7.58},"2564":{"q":[null,1.2,null,1.8],"d":3,"y":7.89}},"TISCO":{"2568":{"q":[null,2,null,5.75],"d":7.75,"y":7.17},"2567":{"q":[null,2,null,5.75],"d":7.75,"y":8.03},"2566":{"q":[null,2,null,5.75],"d":7.75,"y":8.06},"2565":{"q":[null,null,null,7.75],"d":7.75,"y":8.45},"2564":{"q":[null,null,null,7.15],"d":7.15,"y":7.88}},"TLI":{"2568":{"q":[null,null,null,0.6],"d":0.6,"y":6},"2567":{"q":[null,null,null,0.5],"d":0.5,"y":4.31},"2566":{"q":[null,null,null,0.34],"d":0.34,"y":3.54},"2565":{"q":[null,null,null,0.3],"d":0.3,"y":2.38},"2564":{"q":[null,null,null,null],"d":0,"y":0}},"TOP":{"2568":{"q":[null,0.8,null,1],"d":1.8,"y":4.19},"2567":{"q":[null,1.2,null,0.7],"d":1.9,"y":5.3},"2566":{"q":[null,0.65,null,2.75],"d":3.4,"y":6.34},"2565":{"q":[null,null,2,1.7],"d":3.7,"y":6.86},"2564":{"q":[null,0.6,null,2],"d":2.6,"y":5.02}},"TTB":{"2568":{"q":[null,0.066,0.06,0.071],"d":0.197,"y":10.07},"2567":{"q":[null,0.065,0.06,0.06],"d":0.185,"y":10.04},"2566":{"q":[null,0.05,null,0.055],"d":0.105,"y":6.11},"2565":{"q":[null,0.02,null,0.053],"d":0.073,"y":5.38},"2564":{"q":[null,null,null,0.038],"d":0.038,"y":2.95}},"WHA":{"2568":{"q":[null,null,0.0669,0.1438],"d":0.2107,"y":5.22},"2567":{"q":[null,null,0.0669,0.12],"d":0.1869,"y":5.04},"2566":{"q":[null,null,0.0669,0.117],"d":0.1839,"y":3.69},"2565":{"q":[null,null,0.0669,0.1003],"d":0.1672,"y":4.07},"2564":{"q":[null,null,0.0267,0.0735],"d":0.1002,"y":3.04}},"BDMS":{"2568":{"q":[null,0.35,null,0.65],"d":1,"y":5.17},"2567":{"q":[null,0.35,null,0.4],"d":0.75,"y":2.87},"2566":{"q":[null,0.35,null,0.35],"d":0.7,"y":2.5},"2565":{"q":[null,0.3,null,0.3],"d":0.6,"y":2.09},"2564":{"q":[null,0.25,null,0.2],"d":0.45,"y":1.91}},"BEM":{"2568":{"q":[null,null,null,0.15],"d":0.15,"y":2.78},"2567":{"q":[null,null,null,0.15],"d":0.15,"y":2.54},"2566":{"q":[null,null,null,0.14],"d":0.14,"y":1.73},"2565":{"q":[null,null,null,0.12],"d":0.12,"y":1.31},"2564":{"q":[null,null,null,0.08],"d":0.08,"y":0.95}},"CPALL":{"2568":{"q":[null,null,null,1.65],"d":1.65,"y":3.79},"2567":{"q":[null,null,null,1.35],"d":1.35,"y":2.66},"2566":{"q":[null,null,null,1],"d":1,"y":1.72},"2565":{"q":[null,null,null,0.75],"d":0.75,"y":1.16},"2564":{"q":[null,null,null,0.6],"d":0.6,"y":0.92}},"GULF":{"2568":{"q":[null,null,null,3.25],"d":3.25,"y":5.65},"2567":{"q":[null,null,null,1.01],"d":1.01,"y":1.79},"2566":{"q":[null,null,null,0.88],"d":0.88,"y":2.01},"2565":{"q":[null,null,null,0.6],"d":0.6,"y":1.17},"2564":{"q":[null,null,null,0.44],"d":0.44,"y":0.88}},"TIPH":{"2568":{"q":[null,1,null,0.5],"d":1.5,"y":7.22},"2567":{"q":[1.1,0.5,null,1],"d":2.6,"y":10.54},"2566":{"q":[null,0.5,null,null],"d":0.5,"y":1.23},"2565":{"q":[1.3,0.5,null,0.75],"d":2.55,"y":4.42},"2564":{"q":[null,0.5,null,null],"d":0.5,"y":1.38}},"STA":{"2568":{"q":[null,null,null,0.5],"d":0.5,"y":3.07},"2567":{"q":[null,null,null,1],"d":1,"y":7.3},"2566":{"q":[null,null,null,1],"d":1,"y":5.75},"2565":{"q":[null,1,null,0.72],"d":1.72,"y":8.04},"2564":{"q":[1,1.25,1.25,0.65],"d":4.15,"y":12.22}},"THAI":{"2568":{"q":[null,null,null,0.21],"d":0.21,"y":3.47},"2567":{"q":[null,null,null,null],"d":0,"y":null},"2566":{"q":[null,null,null,null],"d":0,"y":null},"2565":{"q":[null,null,null,null],"d":0,"y":null},"2564":{"q":[null,null,null,null],"d":0,"y":null}},"AMARC":{"2568":{"q":[null,0.1,0.05,0.1],"d":0.25,"y":7.09},"2567":{"q":[null,0.02,0.02,0.02],"d":0.06,"y":4.49},"2566":{"q":[null,null,null,0.039],"d":0.039,"y":2.87},"2565":{"q":[null,null,null,0.08],"d":0.08,"y":3.36},"2564":{"q":[null,null,null,null],"d":0,"y":null}},"FORTH":{"2568":{"q":[null,null,null,0.21],"d":0.21,"y":2.98},"2567":{"q":[null,0.15,null,null],"d":0.15,"y":1.36},"2566":{"q":[null,0.25,null,0.22],"d":0.47,"y":2.15},"2565":{"q":[null,0.15,null,0.37],"d":0.52,"y":1.37},"2564":{"q":[null,0.15,null,0.3],"d":0.45,"y":2.05}},"Q-CON":{"2568":{"q":[null,null,null,0.4],"d":0.4,"y":6.06},"2567":{"q":[null,null,null,0.65],"d":0.65,"y":7.88},"2566":{"q":[null,null,null,1],"d":1,"y":6.62},"2565":{"q":[null,null,null,0.75],"d":0.75,"y":4.93},"2564":{"q":[null,null,null,0.31],"d":0.31,"y":5.44}},"AOT":{"2568":{"q":[null,null,0.81,null],"d":0.81,"y":1.54},"2567":{"q":[null,null,0.79,null],"d":0.79,"y":1.28},"2566":{"q":[null,null,0.36,null],"d":0.36,"y":0.6},"2565":{"q":[null,null,null,null],"d":0,"y":0},"2564":{"q":[null,null,null,null],"d":0,"y":0}},"MINT":{"2568":{"q":[null,0.3,null,0.4],"d":0.7,"y":3.25},"2567":{"q":[null,0.25,null,0.35],"d":0.6,"y":2.3},"2566":{"q":[null,0.25,null,0.32],"d":0.57,"y":1.75},"2565":{"q":[null,null,null,0.25],"d":0.25,"y":0.79},"2564":{"q":[null,null,null,null],"d":0,"y":null}},"BBIK":{"2568":{"q":[null,null,null,0.48],"d":0.48,"y":2.64},"2567":{"q":[null,null,null,0.22],"d":0.22,"y":0.77},"2566":{"q":[null,null,null,0.382],"d":0.382,"y":0.72},"2565":{"q":[null,null,null,0.4],"d":0.4,"y":0.4},"2564":{"q":[null,null,null,0.375],"d":0.375,"y":0.63}},"BTG":{"2568":{"q":[null,null,null,1.5],"d":1.5,"y":7.14},"2567":{"q":[null,null,null,0.5],"d":0.5,"y":2.51},"2566":{"q":[null,null,null,0.25],"d":0.25,"y":1.16},"2565":{"q":[null,null,null,1],"d":1,"y":3.6},"2564":{"q":[null,null,null,null],"d":0,"y":null}},"SO":{"2568":{"q":[null,0.2,null,0.18],"d":0.38,"y":8.28},"2567":{"q":[null,0.0007,null,0.18],"d":0.1807,"y":4.52},"2566":{"q":[null,0.2,null,0.2],"d":0.4,"y":5.5},"2565":{"q":[null,0.15,null,0.2],"d":0.35,"y":3.44},"2564":{"q":[null,0.2,null,0.2222],"d":0.4222,"y":2.95}},"TTW":{"2568":{"q":[null,0.3,null,0.3],"d":0.6,"y":6.59},"2567":{"q":[null,0.3,null,0.3],"d":0.6,"y":6.74},"2566":{"q":[null,0.3,null,0.3],"d":0.6,"y":6.75},"2565":{"q":[null,0.3,null,0.3],"d":0.6,"y":6.35},"2564":{"q":[null,0.3,null,0.3],"d":0.6,"y":5.26}},"ORI":{"2568":{"q":[null,null,0.021,0.049],"d":0.07,"y":3.85},"2567":{"q":[null,null,0.021,null],"d":0.021,"y":0.51},"2566":{"q":[null,0.16,null,0.3],"d":0.46,"y":5.98},"2565":{"q":[null,0.15,null,0.57],"d":0.72,"y":6.42},"2564":{"q":[null,0.12,null,0.42],"d":0.54,"y":5.69}},"BCP":{"2568":{"q":[null,null,null,1.05],"d":1.05,"y":2.88},"2567":{"q":[null,0.6,null,0.45],"d":1.05,"y":2.89},"2566":{"q":[null,0.5,null,1.5],"d":2,"y":4.83},"2565":{"q":[null,1.25,null,1],"d":2.25,"y":6.68},"2564":{"q":[null,1,null,1],"d":2,"y":3.77}},"COM7":{"2568":{"q":[null,null,null,1.1],"d":1.1,"y":4.98},"2567":{"q":[null,null,null,0.86],"d":0.86,"y":4.3},"2566":{"q":[null,null,null,0.7],"d":0.7,"y":3.7},"2565":{"q":[null,null,null,0.75],"d":0.75,"y":2.46},"2564":{"q":[null,null,null,1],"d":1,"y":2.37}},"HTC":{"2568":{"q":[null,0.45,null,0.54],"d":0.99,"y":6.58},"2567":{"q":[null,0.48,null,0.57],"d":1.05,"y":6.53},"2566":{"q":[null,0.96,null,0.56],"d":1.52,"y":5.96},"2565":{"q":[null,0.55,null,0.97],"d":1.52,"y":4.77},"2564":{"q":[null,0.83,null,0.96],"d":1.79,"y":5.34}},"DELTA":{"2568":{"q":[null,null,null,0.6],"d":0.6,"y":0.22},"2567":{"q":[null,null,null,0.46],"d":0.46,"y":0.57},"2566":{"q":[null,null,null,0.45],"d":0.45,"y":0.67},"2565":{"q":[null,null,null,4],"d":4,"y":0.44},"2564":{"q":[null,null,null,0.42],"d":0.42,"y":1.7}},"BTS":{"2568":{"q":[null,null,null,null],"d":0,"y":null},"2567":{"q":[null,null,null,null],"d":0,"y":null},"2566":{"q":[null,0.16,null,null],"d":0.16,"y":2.11},"2565":{"q":[null,null,null,0.15],"d":0.15,"y":1.75},"2564":{"q":[null,0.16,null,0.15],"d":0.31,"y":3.41}},"OR":{"2568":{"q":[null,0.3,null,0.3],"d":0.6,"y":4.33},"2567":{"q":[null,0.27,null,0.13],"d":0.4,"y":2.89},"2566":{"q":[null,0.25,null,0.27],"d":0.52,"y":1.47},"2565":{"q":[null,0.35,null,0.15],"d":0.5,"y":1.99},"2564":{"q":[null,0.27,null,0.19],"d":0.46,"y":1.66}},"CPF":{"2568":{"q":[null,1,null,0.25],"d":1.25,"y":5.87},"2567":{"q":[null,0.45,null,0.55],"d":1,"y":3.94},"2566":{"q":[null,null,null,null],"d":0,"y":null},"2565":{"q":[null,0.4,null,0.35],"d":0.75,"y":3.26},"2564":{"q":[null,0.4,null,0.25],"d":0.65,"y":2.54}},"TMW":{"2568":{"q":[null,3.61,null,null],"d":3.61,"y":7.48},"2567":{"q":[null,4.15,null,null],"d":4.15,"y":7.61},"2566":{"q":[null,1.7,null,null],"d":1.7,"y":4.59},"2565":{"q":[null,0.9,null,null],"d":0.9,"y":2.71},"2564":{"q":[null,0.46,null,null],"d":0.46,"y":1.39}},"CPN":{"2568":{"q":[null,null,null,2.4],"d":2.4,"y":3.89},"2567":{"q":[null,null,null,2.1],"d":2.1,"y":4.29},"2566":{"q":[null,null,null,1.8],"d":1.8,"y":2.77},"2565":{"q":[null,null,null,1.15],"d":1.15,"y":1.73},"2564":{"q":[null,null,null,0.6],"d":0.6,"y":1.09}}};
+
 const LS_KEY='divPortfolio.v1';
 let DB=load();
 
@@ -517,7 +579,7 @@ function renderSectors(){
     const rows=items.map(h=>{
       const m=metricsFor(h);const sig=signal(h);
       return `<tr>
-        <td><span class="sym">${h.sym}</span><br><span class="biz">${h.biz||''}</span></td>
+        <td><span class="sym sym-link" onclick="openDetail('${h.sym}')">${h.sym} <span class="sym-ico">📈</span></span><br><span class="biz">${h.biz||''}</span></td>
         <td>${fmt(h.vol)}</td>
         <td>${money(h.avg,2)}</td>
         <td>${h.price===null?'<span style="color:#9ca3af">N/A</span>':money(h.price,2)}</td>
@@ -558,7 +620,7 @@ function renderManage(){
   body.innerHTML=DB.holdings.map((h,i)=>{
     const m=metricsFor(h);
     return `<tr>
-      <td><span class="sym">${h.sym}</span><br><span class="biz">${h.biz||''}</span></td>
+      <td><span class="sym sym-link" onclick="openDetail('${h.sym}')">${h.sym} <span class="sym-ico">📈</span></span><br><span class="biz">${h.biz||''}</span></td>
       <td class="edit-td"><select onchange="edit(${i},'sector',this.value)">${SECTOR_ORDER.map(k=>`<option value="${k}" ${k===h.sector?'selected':''}>${SECTORS[k].name}</option>`).join('')}</select></td>
       <td class="edit-td"><input type="number" inputmode="numeric" value="${h.vol}" onchange="edit(${i},'vol',this.value)"></td>
       <td class="edit-td"><input type="number" inputmode="decimal" step="0.01" value="${h.avg}" onchange="edit(${i},'avg',this.value)"></td>
@@ -665,6 +727,99 @@ function resetData(){
   if(!confirm('รีเซ็ตข้อมูลทั้งหมดกลับเป็นค่าตั้งต้น?'))return;
   DB=JSON.parse(JSON.stringify(DEFAULTS));save();renderAll();toast('รีเซ็ตแล้ว');
 }
+
+/* ============ Stock detail (dividend history, panphol-style) ============ */
+let mdDivChart,mdYieldChart;
+function openDetail(sym){
+  const h=DB.holdings.find(x=>x.sym===sym);
+  const hist=HISTORY[sym];
+  const secKey=h?h.sector:null;
+  const secName=secKey?SECTORS[secKey].name:'ไม่ระบุกลุ่ม';
+  const secColor=secKey?SECTORS[secKey].color:'#0f766e';
+  document.getElementById('md_sym').textContent=sym;
+  document.getElementById('md_biz').textContent=h&&h.biz?h.biz:(hist?'มีข้อมูลปันผลย้อนหลัง':'—');
+  const chip=document.getElementById('md_sector');chip.textContent=secName;chip.style.background=secColor;
+
+  // series
+  const yearsCE=HIST_YEARS.map(y=>HIST_YEARS_CE[y]);
+  const divSeries=HIST_YEARS.map(y=>hist&&hist[y]?hist[y].d:null);
+  const yldSeries=HIST_YEARS.map(y=>hist&&hist[y]?hist[y].y:null);
+  const hasHist=divSeries.some(v=>v!==null&&v!==undefined);
+
+  // KPIs
+  const m=h?metricsFor(h):null;
+  const declared=divSeries.filter(v=>v!==null&&v!==undefined&&v>0);
+  const latestDiv=hasHist?[...divSeries].reverse().find(v=>v!==null&&v!==undefined):(h?h.div:null);
+  const latestYld=hasHist?[...yldSeries].reverse().find(v=>v!==null&&v!==undefined):null;
+  const avg5=declared.length?declared.reduce((a,b)=>a+b,0)/declared.length:(h?h.div:null);
+  // dividend CAGR across available declared years
+  let cagr=null;
+  const firstIdx=divSeries.findIndex(v=>v&&v>0), lastIdx=divSeries.length-1-[...divSeries].reverse().findIndex(v=>v&&v>0);
+  if(firstIdx>-1&&lastIdx>firstIdx&&divSeries[firstIdx]>0){
+    const n=lastIdx-firstIdx;cagr=(Math.pow(divSeries[lastIdx]/divSeries[firstIdx],1/n)-1)*100;
+  }
+  const kpis=[];
+  if(h)kpis.push(['ราคาตลาด', h.price===null?'N/A':money(h.price,2)+' ฿']);
+  kpis.push(['ปันผลล่าสุด/หุ้น', latestDiv!=null?money(latestDiv,2)+' ฿':'—']);
+  kpis.push(['Yield ล่าสุด', latestYld!=null?latestYld.toFixed(2)+'%':'—']);
+  if(h&&m)kpis.push(['Yield on Cost', m.yoc?m.yoc.toFixed(2)+'%':'—']);
+  kpis.push(['ปันผลเฉลี่ย 5 ปี', avg5!=null?money(avg5,2)+' ฿':'—']);
+  kpis.push(['เติบโตปันผล (CAGR)', cagr!=null?(cagr>=0?'+':'')+cagr.toFixed(1)+'%':'—']);
+  document.getElementById('md_kpis').innerHTML=kpis.map(k=>`<div class="md-kpi"><div class="l">${k[0]}</div><div class="v">${k[1]}</div></div>`).join('');
+
+  // note
+  const note=document.getElementById('md_note');
+  if(!hasHist){note.style.display='block';note.innerHTML=`ℹ️ ไม่มีข้อมูลปันผลย้อนหลังของ <b>${sym}</b> ในไฟล์อ้างอิง — แสดงเฉพาะค่าปันผล/หุ้นที่บันทึกไว้ (${h?money(h.div,2):'—'} ฿) แก้ไขได้ในแท็บจัดการหุ้น`;}
+  else note.style.display='none';
+
+  // table (newest first)
+  const rows=[...HIST_YEARS].reverse().map(y=>{
+    const r=hist&&hist[y]?hist[y]:null;
+    const q=r?r.q:[null,null,null,null];
+    const cell=v=>v!=null?money(v,2):'<span style="color:#cbd5e1">-</span>';
+    return `<tr>
+      <td class="sym">${y} <span class="biz">(${HIST_YEARS_CE[y]})</span></td>
+      <td>${cell(q[0])}</td><td>${cell(q[1])}</td><td>${cell(q[2])}</td><td>${cell(q[3])}</td>
+      <td><b>${r&&r.d!=null?money(r.d,2):'—'}</b></td>
+      <td>${r&&r.y!=null?r.y.toFixed(2)+'%':'—'}</td>
+    </tr>`;
+  }).join('');
+  document.getElementById('md_table').innerHTML=
+    `<thead><tr><th>ปี พ.ศ.</th><th>Q1</th><th>Q2</th><th>Q3</th><th>Q4</th><th>รวม/ปี</th><th>%Yield</th></tr></thead><tbody>${rows}</tbody>`;
+
+  document.getElementById('detailModal').classList.add('show');
+  document.body.style.overflow='hidden';
+
+  // charts — draw after modal visible so canvas has size
+  setTimeout(()=>{
+    const lastI=divSeries.length-1;
+    if(mdDivChart)mdDivChart.destroy();
+    mdDivChart=new Chart(document.getElementById('mdDiv'),{
+      type:'bar',
+      data:{labels:yearsCE,datasets:[{data:divSeries,
+        backgroundColor:divSeries.map((_,i)=>i===lastI?'#eda100':'#0f766e'),
+        borderRadius:5,borderSkipped:false}]},
+      options:{responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>' '+money(c.raw,2)+' บาท/หุ้น'}}},
+        scales:{y:{beginAtZero:true,grid:{color:'#f1f5f9'},ticks:{callback:v=>money(v,2)}},x:{grid:{display:false}}}}
+    });
+    if(mdYieldChart)mdYieldChart.destroy();
+    mdYieldChart=new Chart(document.getElementById('mdYield'),{
+      type:'bar',
+      data:{labels:yearsCE,datasets:[{data:yldSeries,
+        backgroundColor:yldSeries.map((_,i)=>i===lastI?'#1baf7a':'#5eead4'),
+        borderRadius:5,borderSkipped:false}]},
+      options:{responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>' Yield '+(c.raw!=null?c.raw.toFixed(2):'—')+'%'}}},
+        scales:{y:{beginAtZero:true,grid:{color:'#f1f5f9'},ticks:{callback:v=>v+'%'}},x:{grid:{display:false}}}}
+    });
+  },60);
+}
+function closeDetail(){
+  document.getElementById('detailModal').classList.remove('show');
+  document.body.style.overflow='';
+}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeDetail();});
 
 /* ============ Tabs ============ */
 function switchTab(name){
