@@ -264,6 +264,16 @@ textarea.paste{width:100%;min-height:130px;padding:12px;border:1px solid var(--l
   <div class="tab" data-tab="manage">⚙️ จัดการหุ้น / อัปเดต</div>
 </div>
 
+<div id="demoBanner" style="display:none">
+  <div style="max-width:1320px;margin:12px auto 0;padding:0 18px;position:relative;z-index:1">
+    <div style="background:#fff7e6;border:1.5px solid #f6dfa6;color:#8a5a00;border-radius:12px;padding:11px 15px;font-size:.86rem;font-weight:600;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <span style="font-size:1.1rem">ℹ️</span>
+      <span style="flex:1;min-width:200px">กำลังแสดง <b>ข้อมูลตัวอย่าง</b> — ไปที่แท็บ “จัดการหุ้น” แล้วกด <b>Import JSON</b> เพื่อโหลดพอร์ตจริงของคุณ</span>
+      <button class="btn btn-primary btn-sm" onclick="switchTab('manage')">ไปนำเข้าข้อมูล</button>
+    </div>
+  </div>
+</div>
+
 <!-- ===================== OVERVIEW ===================== -->
 <div class="content active" id="overview">
 
@@ -363,19 +373,22 @@ textarea.paste{width:100%;min-height:130px;padding:12px;border:1px solid var(--l
 <div class="content" id="manage">
 
   <div class="card">
-    <h3>📸 อัปเดตจากรูป Portfolio (วาง/พิมพ์ข้อมูล)</h3>
+    <h3>📸 อัปเดตจากรูป Portfolio</h3>
     <div class="hint">
-      คัดลอกหรือพิมพ์ข้อมูลจากรูป capture ของแอป broker วางทีละหลายบรรทัดได้ — รูปแบบ:
-      <code>SYMBOL  จำนวนหุ้น  ต้นทุนเฉลี่ย  ราคาตลาด</code> หรือวางทั้งแถวจากแอป
-      (<code>SCB 2,300 2,300 133.20 159.00 306,363.84 ...</code>) ระบบจะจับ ชื่อหุ้น, จำนวน, ต้นทุน, ราคาตลาด ให้อัตโนมัติ<br>
-      หุ้นที่มีอยู่แล้วจะถูก<b>อัปเดตราคา/จำนวน</b> (คงกลุ่มธุรกิจและปันผลเดิม) หุ้นใหม่จะถูก<b>เพิ่มเข้าพอร์ต</b>
+      <b>วิธีที่ 1 — อัปโหลดรูป (OCR):</b> เลือก/ถ่ายรูปหน้าพอร์ตจากแอป broker ระบบจะอ่านตัวอักษรให้อัตโนมัติแล้วเติมลงช่องด้านล่างเพื่อ<b>ตรวจ/แก้ก่อนบันทึก</b> (ต้องต่ออินเทอร์เน็ต · ความแม่นยำขึ้นกับความคมของรูป)<br>
+      <b>วิธีที่ 2 — วาง/พิมพ์ข้อความ:</b> รูปแบบ <code>SYMBOL  จำนวน  ต้นทุน  ราคาตลาด</code> หรือวางทั้งแถวจากแอป
     </div>
-    <textarea class="paste" id="pasteBox" placeholder="ตัวอย่าง:
+    <div class="toolbar">
+      <button class="btn btn-primary" onclick="document.getElementById('ocrFile').click()">📷 อัปโหลดรูป (OCR)</button>
+      <input type="file" id="ocrFile" accept="image/*" style="display:none" onchange="ocrImage(event)">
+      <span id="ocrStatus" style="font-size:.82rem;color:var(--sub);align-self:center"></span>
+    </div>
+    <textarea class="paste" id="pasteBox" placeholder="ผลจากการอ่านรูป หรือพิมพ์เอง เช่น:
 SCB 2,300 2,300 133.20 159.00 306,363.84 365,700.00
 KBANK 168 168 84.94 234.00 14,269.55 39,312.00
 GULF 51 51 40.82 63.50"></textarea>
     <div class="toolbar" style="margin-top:12px">
-      <button class="btn btn-primary" onclick="importPaste()">🔄 อัปเดตเข้าพอร์ต</button>
+      <button class="btn btn-primary" onclick="importPaste()">🔄 ตรวจแล้ว — อัปเดตเข้าพอร์ต</button>
       <button class="btn btn-ghost" onclick="document.getElementById('pasteBox').value=''">ล้างช่อง</button>
     </div>
   </div>
@@ -438,7 +451,7 @@ GULF 51 51 40.82 63.50"></textarea>
 
 <div class="footer">
   Dividend Portfolio Dashboard &middot; ข้อมูลจากผู้ใช้ (แก้ไขได้) &middot; ปันผลเป็นค่าประมาณจากปีล่าสุด ควรตรวจสอบกับประกาศจริงของบริษัท<br>
-  <span style="opacity:.7">เวอร์ชัน 3.1 &middot; ธีม Teal/Mint &middot; แจ้งเตือนราคาเป้า + ปฏิทินปันผล + วิเคราะห์ Trim/ถือ</span>
+  <span style="opacity:.7">เวอร์ชัน 3.2 &middot; ธีม Teal/Mint &middot; OCR อัปโหลดรูป + แจ้งเตือนราคาเป้า + ปฏิทินปันผล</span>
 </div>
 
 <!-- ===================== STOCK DETAIL MODAL (dividend history) ===================== -->
@@ -517,31 +530,26 @@ const SECTORS = {
 const SECTOR_ORDER = Object.keys(SECTORS);
 
 /* ============ Default data (from portfolio screenshots + SETHD/JITTA dividends) ============ */
+/* ข้อมูลตัวอย่าง (DEMO) — ไม่ใช่พอร์ตจริง. ผู้ใช้กด "Import JSON" เพื่อโหลดข้อมูลจริงของตนเอง
+   (ข้อมูลจริงถูกเก็บในเครื่องผู้ใช้ผ่าน localStorage / ไฟล์ export ส่วนตัว ไม่เก็บในซอร์สโค้ดสาธารณะ) */
 const DEFAULTS = {
-  asOf:'13 Jul 2026 15:30',
-  cash:36060.41,
-  goal:75000,
+  asOf:'ตัวอย่าง',
+  cash:50000,
+  goal:60000,
   horizon:5,        // ปีที่ใช้เทียบ (ถือรอปันผลกี่ปี)
   feePct:0.257,     // ค่าธรรมเนียมขาย % (คอมมิชชั่น+VAT โดยประมาณ)
-  notes:'เน้นถือกินปันผล + take profit เมื่อกำไรวิ่งแรง (เช่น KBANK, KKP). กระจายตามกลุ่มธุรกิจ ธนาคารเป็นแกนหลัก.',
+  demo:true,
+  notes:'ℹ️ นี่คือข้อมูลตัวอย่างสำหรับสาธิต — กด “Import JSON” ในแท็บจัดการหุ้น เพื่อโหลดพอร์ตจริงของคุณ',
   holdings:[
-    // sym, biz, sector, vol, avgCost, price, cost(Amount), divPerShare
-    {sym:'AMARC', biz:'บริการตรวจวิเคราะห์/ทดสอบ', sector:'SERV',   vol:2000,  avg:3.51,  price:3.64,  cost:7011.77,   div:0.25},
-    {sym:'BDMS',  biz:'รพ.กรุงเทพ (BDMS)',          sector:'HEALTH', vol:11200, avg:18.82, price:19.40, cost:210793.50, div:1.00},
-    {sym:'BEM',   biz:'ทางด่วน & รถไฟฟ้า',          sector:'INFRA',  vol:6500,  avg:5.14,  price:6.05,  cost:33431.10,  div:0.15},
-    {sym:'BTS-W8',biz:'ใบสำคัญแสดงสิทธิ BTS',        sector:'INFRA',  vol:1400,  avg:0.00,  price:0.01,  cost:0.00,      div:0},
-    {sym:'CPALL', biz:'เซเว่นอีเลฟเว่น',            sector:'COMM',   vol:600,   avg:44.20, price:46.50, cost:26519.48,  div:1.65},
-    {sym:'GULF',  biz:'พลังงานไฟฟ้า (กัลฟ์)',        sector:'ENERGY', vol:51,    avg:40.82, price:63.50, cost:2081.74,   div:1.00, target:60},
-    {sym:'IFEC',  biz:'พลังงาน (พักการซื้อขาย)',     sector:'ENERGY', vol:225,   avg:0.00,  price:null,  cost:0.00,      div:0},
-    {sym:'KBANK', biz:'ธนาคารกสิกรไทย',              sector:'BANK',   vol:168,   avg:84.94, price:234.00,cost:14269.55,  div:10.50, target:230},
-    {sym:'KKP',   biz:'ธ.เกียรตินาคินภัทร',          sector:'BANK',   vol:2000,  avg:59.44, price:106.50,cost:118877.62, div:5.70, target:108},
-    {sym:'KTB',   biz:'ธนาคารกรุงไทย',               sector:'BANK',   vol:3500,  avg:35.04, price:41.25, cost:122655.71, div:2.67},
-    {sym:'RATCH', biz:'ผลิตไฟฟ้า (ราชกรุ๊ป)',        sector:'ENERGY', vol:4000,  avg:26.58, price:37.00, cost:106303.29, div:1.60, target:38},
-    {sym:'RCL',   biz:'เดินเรือคอนเทนเนอร์',         sector:'INFRA',  vol:600,   avg:30.68, price:32.00, cost:18405.87,  div:2.50},
-    {sym:'SCB',   biz:'SCBX ธนาคารไทยพาณิชย์',       sector:'BANK',   vol:2300,  avg:133.20,price:159.00,cost:306363.84, div:11.28},
-    {sym:'TIPH',  biz:'ทิพย กรุ๊ป โฮลดิ้งส์ (ประกัน)',sector:'INSUR', vol:700,   avg:20.19, price:23.30, cost:14133.70,  div:1.50},
-    {sym:'WHA',   biz:'โลจิสติกส์ & นิคมฯ',          sector:'PROP',   vol:500,   avg:5.06,  price:5.40,  cost:2529.25,   div:0.21},
-    {sym:'WHAUP', biz:'สาธารณูปโภค & ไฟฟ้า (WHA)',   sector:'ENERGY', vol:1000,  avg:7.04,  price:8.15,  cost:7036.78,   div:0.32},
+    // ตัวเลขสมมติเพื่อสาธิตเท่านั้น
+    {sym:'PTT',   biz:'ปตท (ตัวอย่าง)',          sector:'ENERGY', vol:1000, avg:30.00,  price:35.00,  cost:30000, div:3.20, target:38},
+    {sym:'KBANK', biz:'ธนาคารกสิกรไทย (ตัวอย่าง)', sector:'BANK',   vol:200,  avg:120.00, price:150.00, cost:24000, div:10.00, target:160},
+    {sym:'SCB',   biz:'SCBX (ตัวอย่าง)',          sector:'BANK',   vol:500,  avg:100.00, price:118.00, cost:50000, div:10.50},
+    {sym:'TISCO', biz:'ทิสโก้ (ตัวอย่าง)',        sector:'BANK',   vol:300,  avg:90.00,  price:100.00, cost:27000, div:7.75, target:104},
+    {sym:'CPALL', biz:'ซีพีออลล์ (ตัวอย่าง)',     sector:'COMM',   vol:1000, avg:55.00,  price:60.00,  cost:55000, div:1.65},
+    {sym:'BDMS',  biz:'รพ.กรุงเทพ (ตัวอย่าง)',     sector:'HEALTH', vol:2000, avg:20.00,  price:22.00,  cost:40000, div:0.90},
+    {sym:'RATCH', biz:'ราชกรุ๊ป (ตัวอย่าง)',       sector:'ENERGY', vol:1000, avg:30.00,  price:35.00,  cost:30000, div:1.60},
+    {sym:'WHA',   biz:'ดับบลิวเอชเอ (ตัวอย่าง)',   sector:'PROP',   vol:5000, avg:4.50,   price:5.20,   cost:22500, div:0.21},
   ]
 };
 
@@ -586,6 +594,8 @@ function logPrice(h,newPrice){
   if(h.ph.length>60)h.ph=h.ph.slice(-60);
 }
 function save(){localStorage.setItem(LS_KEY,JSON.stringify(DB));}
+/* once the user changes anything, it's their data — drop the demo flag */
+function clearDemo(){if(DB.demo){DB.demo=false;}}
 function fmt(n,d=0){if(n===null||n===undefined||isNaN(n))return '—';return n.toLocaleString('th-TH',{minimumFractionDigits:d,maximumFractionDigits:d});}
 function money(n,d=0){return n===null||isNaN(n)?'—':fmt(n,d)}
 function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),2200);}
@@ -783,7 +793,7 @@ function renderManage(){
 }
 
 /* ============ Actions ============ */
-function edit(i,key,val){
+function edit(i,key,val){clearDemo();
   if(key==='sector'){DB.holdings[i].sector=val;}
   else if(key==='price'){const np=val===''?null:parseFloat(val);DB.holdings[i].price=np;logPrice(DB.holdings[i],np);}
   else if(key==='target'){DB.holdings[i].target=val===''?null:parseFloat(val);}
@@ -794,7 +804,7 @@ function edit(i,key,val){
 }
 function delStock(i){
   if(!confirm('ลบ '+DB.holdings[i].sym+' ออกจากพอร์ต?'))return;
-  DB.holdings.splice(i,1);save();renderAll();toast('ลบหุ้นแล้ว');
+  clearDemo();DB.holdings.splice(i,1);save();renderAll();toast('ลบหุ้นแล้ว');
 }
 function addStock(){
   const sym=document.getElementById('f_sym').value.trim().toUpperCase();
@@ -808,7 +818,7 @@ function addStock(){
   if(existing){existing.vol=vol;existing.avg=avg;existing.price=price;existing.div=div;existing.cost=vol*avg;logPrice(existing,price);}
   else{const nh={sym,biz:document.getElementById('f_biz').value.trim(),sector:document.getElementById('f_sector').value,vol,avg,price,cost:vol*avg,div,ph:[]};if(avg>0)nh.ph.push({t:'ต้นทุน',p:avg});logPrice(nh,price);DB.holdings.push(nh);}
   ['f_sym','f_biz','f_vol','f_cost','f_price','f_div'].forEach(id=>document.getElementById(id).value='');
-  save();renderAll();toast(existing?'อัปเดต '+sym:'เพิ่ม '+sym+' แล้ว');
+  clearDemo();save();renderAll();toast(existing?'อัปเดต '+sym:'เพิ่ม '+sym+' แล้ว');
 }
 function saveMeta(){
   DB.cash=parseFloat(document.getElementById('f_cashbal').value)||0;
@@ -849,9 +859,60 @@ function importPaste(){
     else{const nh={sym,biz:'',sector:'SERV',vol,avg,price,cost:vol*avg,div:0,ph:[]};if(avg>0)nh.ph.push({t:'ต้นทุน',p:avg});logPrice(nh,price);DB.holdings.push(nh);added++;}
   });
   if(added+updated===0){toast('ไม่พบข้อมูลที่อ่านได้ ตรวจรูปแบบอีกครั้ง');return;}
-  save();renderAll();
+  clearDemo();save();renderAll();
   toast(`อัปเดต ${updated} ตัว, เพิ่มใหม่ ${added} ตัว`);
   if(added)switchTab('manage');
+}
+
+/* ---- OCR: read a portfolio screenshot into the paste box (#2) ---- */
+let _tessLoading=null;
+function loadTesseract(){
+  if(window.Tesseract)return Promise.resolve();
+  if(_tessLoading)return _tessLoading;
+  _tessLoading=new Promise((res,rej)=>{
+    const s=document.createElement('script');
+    s.src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';
+    s.onload=res; s.onerror=()=>rej(new Error('โหลดตัวอ่านรูป (OCR) ไม่สำเร็จ — ตรวจอินเทอร์เน็ต'));
+    document.head.appendChild(s);
+  });
+  return _tessLoading;
+}
+async function ocrImage(e){
+  const f=e.target.files&&e.target.files[0]; e.target.value='';
+  if(!f)return;
+  const st=document.getElementById('ocrStatus');
+  st.textContent='กำลังโหลดตัวอ่านรูป…';
+  try{
+    await loadTesseract();
+    const url=URL.createObjectURL(f);
+    st.textContent='กำลังอ่านรูป… 0%';
+    const worker=await Tesseract.createWorker('eng',1,{logger:m=>{
+      if(m.status==='recognizing text')st.textContent='กำลังอ่านรูป… '+Math.round(m.progress*100)+'%';
+    }});
+    // bias toward tickers + numbers found in broker tables
+    await worker.setParameters({tessedit_char_whitelist:'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.,-/ NA'});
+    const {data:{text}}=await worker.recognize(url);
+    await worker.terminate(); URL.revokeObjectURL(url);
+    const cleaned=cleanOcrText(text);
+    const box=document.getElementById('pasteBox');
+    box.value=(box.value?box.value.replace(/\s+$/,'')+'\n':'')+cleaned;
+    st.textContent='✓ อ่านรูปเสร็จ — โปรดตรวจ/แก้ตัวเลขให้ถูกต้อง แล้วกด “อัปเดตเข้าพอร์ต”';
+    box.scrollIntoView({behavior:'smooth',block:'center'});
+  }catch(err){
+    st.textContent='✕ '+(err&&err.message?err.message:'อ่านรูปไม่สำเร็จ');
+  }
+}
+/* keep only lines that look like a holding row: a ticker followed by numbers */
+function cleanOcrText(text){
+  const out=[];
+  text.split(/\n/).forEach(line=>{
+    const t=line.trim().replace(/\s{2,}/g,' ');
+    if(!t)return;
+    const first=t.split(/\s+/)[0].toUpperCase();
+    const hasNum=/\d/.test(t.slice(first.length));
+    if(/^[A-Z][A-Z0-9&.\-]{1,9}$/.test(first)&&hasNum)out.push(t);
+  });
+  return out.join('\n');
 }
 
 /* ---- backup ---- */
@@ -863,7 +924,7 @@ function exportData(){
 }
 function importFile(e){
   const f=e.target.files[0];if(!f)return;const r=new FileReader();
-  r.onload=()=>{try{DB=JSON.parse(r.result);save();renderAll();toast('นำเข้าข้อมูลแล้ว');}catch(err){toast('ไฟล์ไม่ถูกต้อง');}};
+  r.onload=()=>{try{DB=migrate(JSON.parse(r.result));DB.demo=false;save();renderAll();toast('นำเข้าข้อมูลแล้ว');}catch(err){toast('ไฟล์ไม่ถูกต้อง');}};
   r.readAsText(f);e.target.value='';
 }
 function resetData(){
@@ -1206,6 +1267,7 @@ document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>swit
 
 /* ============ Render all ============ */
 function renderAll(){renderTop();renderSectors();renderManage();renderAlerts();
+  document.getElementById('demoBanner').style.display=DB.demo?'block':'none';
   if(document.getElementById('overview').classList.contains('active'))renderCharts();
   if(document.getElementById('calendar').classList.contains('active'))renderCalendar();}
 renderAll();

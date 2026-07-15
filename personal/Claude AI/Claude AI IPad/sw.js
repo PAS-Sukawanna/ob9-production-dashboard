@@ -1,5 +1,5 @@
 /* Dividend Portfolio Dashboard — service worker (network-first, offline fallback) */
-const CACHE = 'divport-v4';
+const CACHE = 'divport-v5';
 self.addEventListener('install', e => { self.skipWaiting(); });
 self.addEventListener('activate', e => {
   e.waitUntil(
